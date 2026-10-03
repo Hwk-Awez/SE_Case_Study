@@ -1,0 +1,24 @@
+============================================================
+MVC ARCHITECTURAL BLUEPRINT SPECIFICATION
+============================================================
+1. Model Layer:
+   - Holds core business logic and state invariants.
+   - Decoupled from HTTP requests and UI rendering.
+   - Interacts with ORM and persistent storage.
+
+2. View Layer:
+   - Renders data passed by Controller.
+   - Minimal business logic (template loops, conditionals only).
+   - Serves HTML, JSON, or CSV formats.
+
+3. Controller Layer:
+   - Accepts incoming HTTP request.
+   - Performs authorization check and validates input DTO.
+   - Invokes Domain Services / Models.
+   - Selects appropriate View and passes context payload.
+
+4. Data Flow:
+   Client -> Router -> Controller -> Service -> Model -> DB
+                      Controller <- Service <- Model <- DB
+   Client <- Controller (renders View template with context)
+============================================================

@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Usage Analytics &amp; Query Analysis — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Usage Statistics &amp; Query Analytics</h1>
+    <p class="page-subtitle">Repository adoption metrics, top reused assets, and search demand analysis.</p>
+  </div>
+</div>
+
+<!-- Top-level Analytics Summary Strip -->
+<div class="stats-grid">
+  <div class="stat-box">
+    <div class="stat-label">Total Searches Logged</div>
+    <div class="stat-value">{{ total_searches }}</div>
+    <div class="stat-desc">Search operations recorded</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Zero-Result Searches</div>
+    <div class="stat-value" style="color: {% if zero_result_count > 0 %}var(--accent-danger){% else %}var(--text-main){% endif %};">
+      {{ zero_result_count }}
+    </div>
+    <div class="stat-desc">Developer search queries with 0 hits</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Top Reused Asset</div>
+    <div class="stat-value" style="font-size: 16px; margin-top: 8px; font-weight: 600; color: var(--accent-success);">
+      {{ most_reused.0.name|default:"None" }}
+    </div>
+    <div class="stat-desc">{{ most_reused.0.reuse_count|default:0 }} confirmed reuses</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Most Viewed Asset</div>
+    <div class="stat-value" style="font-size: 16px; margin-top: 8px; font-weight: 600;">
+      {{ most_viewed.0.name|default:"None" }}
+    </div>
+    <div class="stat-desc">{{ most_viewed.0.view_count|default:0 }} page impressions</div>
+  </div>
+</div>
+
+<!-- Usage Statistics Tables (Top Components) -->
+<div style="margin-top: 24px;">
+  <h2 style="font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-main); margin-bottom: 12px;">
+    Top Components by Metric
+  </h2>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 28px;">
+    <!-- Most Reused -->
+    <div class="card" style="margin-bottom: 0; padding: 14px;">
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--accent-success); margin-bottom: 10px;">
+        &#9733; Most Reused Components
+      </h3>
+      <table class="data-table" style="font-size: 13px;">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th style="text-align: right;">Reuses</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comp in most_reused %}
+            <tr>
+              <td>
+                <a href="{% url 'component_detail' comp.pk %}">{{ comp.name }}</a>
+              </td>
+              <td style="text-align: right; font-weight: 600; color: var(--accent-success);">
+                {{ comp.reuse_count }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="2" style="color: var(--text-muted);">No records</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Most Downloaded -->
+    <div class="card" style="margin-bottom: 0; padding: 14px;">
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px;">
+        &#8681; Most Downloaded Components
+      </h3>
+      <table class="data-table" style="font-size: 13px;">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th style="text-align: right;">Downloads</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comp in most_downloaded %}
+            <tr>
+              <td>
+                <a href="{% url 'component_detail' comp.pk %}">{{ comp.name }}</a>
+              </td>
+              <td style="text-align: right; font-weight: 600;">
+                {{ comp.download_count }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="2" style="color: var(--text-muted);">No records</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Most Viewed -->
+    <div class="card" style="margin-bottom: 0; padding: 14px;">
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 10px;">
+        &#9673; Most Viewed Components
+      </h3>
+      <table class="data-table" style="font-size: 13px;">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th style="text-align: right;">Views</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comp in most_viewed %}
+            <tr>
+              <td>
+                <a href="{% url 'component_detail' comp.pk %}">{{ comp.name }}</a>
+              </td>
+              <td style="text-align: right; font-weight: 600;">
+                {{ comp.view_count }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="2" style="color: var(--text-muted);">No records</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Query Analysis Section (Section 9) -->
+<div style="margin-top: 24px;">
+  <div class="page-header" style="border-bottom: none; margin-bottom: 8px;">
+    <div>
+      <h2 style="font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-main);">
+        Query Analysis &amp; Developer Demand
+      </h2>
+      <p class="page-subtitle">
+        Identifies what tools developers are seeking and highlights components that the team needs to build.
+      </p>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <!-- Most Frequent Queries -->
+    <div class="card" style="padding: 14px;">
+      <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+        Most Searched Queries
+      </h3>
+      <table class="data-table" style="font-size: 13px;">
+        <thead>
+          <tr>
+            <th>Query Text</th>
+            <th style="text-align: right;">Frequency</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in frequent_queries %}
+            <tr>
+              <td>
+                <a href="{% url 'search' %}?q={{ q.query_text }}">{{ q.query_text }}</a>
+              </td>
+              <td style="text-align: right; font-weight: 600;">
+                {{ q.total_hits }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="2" style="color: var(--text-muted);">No queries recorded</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Zero-Result Queries -->
+    <div class="card" style="padding: 14px; border-color: #fde68a;">
+      <h3 style="font-size: 14px; font-weight: 600; color: #92400e; margin-bottom: 6px;">
+        Queries with Zero Results (Demand Gap)
+      </h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+        These searches returned 0 matches, suggesting missing components needed in the repository:
+      </p>
+      <table class="data-table" style="font-size: 13px;">
+        <thead>
+          <tr>
+            <th>Unmatched Query</th>
+            <th>Logged At</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for zq in recent_zero_queries %}
+            <tr>
+              <td style="font-weight: 600; color: var(--accent-danger);">
+                {{ zq.query_text }}
+              </td>
+              <td style="font-size: 12px; color: var(--text-muted);">
+                {{ zq.timestamp|date:"M d, H:i" }}
+              </td>
+              <td style="text-align: right;">
+                <a href="{% url 'component_create' %}" class="btn btn-secondary btn-sm" title="Create component to satisfy this demand">
+                  + Create
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" style="color: var(--text-muted);">No zero-result searches recorded yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

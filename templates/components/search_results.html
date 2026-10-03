@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results: "{{ query }}" — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 16px;">
+  <div>
+    <h1 class="page-title">Search Results</h1>
+    <p class="page-subtitle">
+      Query: <strong>"{{ query }}"</strong> &bull; {{ count }} matching component{{ count|pluralize }} found
+    </p>
+  </div>
+</div>
+
+<!-- Search Query Input Refinement -->
+<div class="search-container">
+  <form action="{% url 'search' %}" method="get" class="search-form">
+    <input
+      type="text"
+      name="q"
+      value="{{ query }}"
+      class="search-input"
+      placeholder="Search reusable components..."
+      required
+    >
+    <!-- Preserved filters -->
+    {% if selected_type %}
+      <input type="hidden" name="type" value="{{ selected_type }}">
+    {% endif %}
+    {% if selected_cat_id %}
+      <input type="hidden" name="category" value="{{ selected_cat_id }}">
+    {% endif %}
+    <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">Search</button>
+  </form>
+
+  <!-- Search Engine Information Strip -->
+  <div class="search-meta-note">
+    <span>
+      <strong>Engine:</strong>
+      {% if search_mode == 'semantic' %}
+        <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Pinecone Vector Similarity</span>
+      {% else %}
+        <span class="badge badge-neutral">Keyword &amp; Concept Expansion Fallback</span>
+      {% endif %}
+      &bull; {{ search_note }}
+    </span>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card" style="padding: 10px 14px; margin-bottom: 20px;">
+  <form method="get" action="{% url 'search' %}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+    <input type="hidden" name="q" value="{{ query }}">
+
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <label for="type_select" style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Filter Type:</label>
+      <select name="type" id="type_select" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="this.form.submit()">
+        <option value="">All Types</option>
+        <option value="CODE" {% if selected_type == 'CODE' %}selected{% endif %}>Code</option>
+        <option value="DESIGN" {% if selected_type == 'DESIGN' %}selected{% endif %}>Design</option>
+      </select>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <label for="cat_select" style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Category:</label>
+      <select name="category" id="cat_select" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_cat_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if selected_type or selected_cat_id %}
+      <a href="{% url 'search' %}?q={{ query }}" class="btn btn-secondary btn-sm">Clear Filter</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Results List -->
+<div style="display: flex; flex-direction: column; gap: 12px;">
+  {% for comp in results %}
+    <div class="card" style="margin-bottom: 0;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 260px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            {% if comp.component_type == 'CODE' %}
+              <span class="badge badge-code">Code</span>
+            {% else %}
+              <span class="badge badge-design">Design</span>
+            {% endif %}
+
+            <h2 style="font-size: 16px; font-weight: 600; margin: 0;">
+              <a href="{% url 'component_detail' comp.pk %}" style="color: var(--text-main);">{{ comp.name }}</a>
+            </h2>
+
+            <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">v{{ comp.version }}</span>
+          </div>
+
+          <p style="color: var(--text-muted); font-size: 13px; line-height: 1.4; margin-bottom: 6px;">
+            {{ comp.description }}
+          </p>
+
+          <div style="font-size: 12px; color: var(--text-muted);">
+            Category: <strong>{{ comp.category.name|default:"General" }}</strong> &bull; Author: {{ comp.author }} &bull; Reuses: <strong style="color: var(--accent-success);">{{ comp.reuse_count }}</strong>
+          </div>
+
+          {% if comp.get_keywords_list %}
+            <div class="tag-list" style="margin-top: 6px;">
+              {% for tag in comp.get_keywords_list %}
+                <span class="tag-item">#{{ tag }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+          <a href="{% url 'component_detail' comp.pk %}" class="btn btn-primary btn-sm">
+            View Details &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="card" style="text-align: center; padding: 40px; color: var(--text-muted);">
+      <p style="font-size: 16px; margin-bottom: 8px;">No components matched your search query.</p>
+      <p style="font-size: 13px; margin-bottom: 16px;">This query has been logged to the <strong>Query Analysis</strong> table in Analytics so repository curators know what components are needed.</p>
+      <div style="display: flex; justify-content: center; gap: 8px;">
+        <a href="{% url 'component_list' %}" class="btn btn-secondary">Browse All Components</a>
+        <a href="{% url 'component_create' %}" class="btn btn-primary">+ Add New Component</a>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

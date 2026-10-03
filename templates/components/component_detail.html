@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ component.name }} — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+      {% if component.component_type == 'CODE' %}
+        <span class="badge badge-code">Code Component</span>
+      {% else %}
+        <span class="badge badge-design">Design Component</span>
+      {% endif %}
+      <span style="font-family: var(--font-mono); font-size: 13px; color: var(--text-muted);">Version {{ component.version }}</span>
+    </div>
+    <h1 class="page-title">{{ component.name }}</h1>
+    <p class="page-subtitle">
+      Added by <strong>{{ component.author }}</strong> on {{ component.created_at|date:"F d, Y" }}
+    </p>
+  </div>
+
+  <!-- Primary Action Buttons -->
+  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    <button type="button" class="btn btn-success" id="openReuseModalBtn">
+      &#10003; Mark as Reused
+    </button>
+    {% if component.file %}
+      <a href="{% url 'component_download' component.pk %}" class="btn btn-primary">
+        &#8681; Download File
+      </a>
+    {% endif %}
+    <a href="{% url 'component_update' component.pk %}" class="btn btn-secondary">
+      Edit
+    </a>
+    <a href="{% url 'component_delete' component.pk %}" class="btn btn-danger">
+      Delete
+    </a>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <!-- Left Column: Description, File Info, Reuse History -->
+  <div>
+    <!-- Description -->
+    <div class="detail-section">
+      <h2 class="detail-section-title">Component Specification</h2>
+      <div class="description-box">
+        {{ component.description }}
+      </div>
+    </div>
+
+    <!-- Attached Asset File -->
+    <div class="detail-section">
+      <h2 class="detail-section-title">Attached File Artifact</h2>
+      <div class="card" style="margin-bottom: 0;">
+        {% if component.file %}
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="font-weight: 600; font-family: var(--font-mono); font-size: 14px;">
+                {{ component.file_name }}
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                Format: <strong>{{ component.file_extension }}</strong> &bull; Total downloads: {{ component.download_count }}
+              </div>
+            </div>
+            <a href="{% url 'component_download' component.pk %}" class="btn btn-secondary btn-sm">
+              Download Artifact
+            </a>
+          </div>
+        {% else %}
+          <p style="color: var(--text-muted); font-size: 13px;">No file asset attached to this component specification.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Reuse History Section (Section 11) -->
+    <div class="detail-section" style="margin-top: 28px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h2 class="detail-section-title" style="margin-bottom: 0; border-bottom: none;">
+          Reuse History ({{ reuse_history.count }})
+        </h2>
+        <button type="button" class="btn btn-secondary btn-sm" id="openReuseModalBtn2" onclick="document.getElementById('reuseModal').classList.add('active');">
+          + Record New Reuse
+        </button>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Reused By</th>
+              <th>Project Name</th>
+              <th>Action</th>
+              <th>Integration Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for record in reuse_history %}
+              <tr>
+                <td style="font-size: 12px; font-family: var(--font-mono); white-space: nowrap; color: var(--text-muted);">
+                  {{ record.reused_at|date:"Y-m-d" }}
+                </td>
+                <td style="font-weight: 600; font-size: 13px;">{{ record.reused_by }}</td>
+                <td style="font-size: 13px;">{{ record.project_name }}</td>
+                <td style="font-size: 12px;"><span class="badge badge-neutral">{{ record.action }}</span></td>
+                <td style="font-size: 12px; color: var(--text-muted);">
+                  {{ record.notes|default:"—" }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
+                  No formal reuses recorded yet. Be the first to reuse this component!
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Metadata & Statistics Strip -->
+  <div>
+    <!-- Metrics Box -->
+    <div class="card">
+      <div class="detail-section-title" style="margin-bottom: 12px;">Usage Metrics</div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center;">
+        <div style="border-right: 1px solid var(--border-color); padding-right: 6px;">
+          <div style="font-size: 22px; font-weight: 700; color: var(--text-main);">{{ component.view_count }}</div>
+          <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Views</div>
+        </div>
+        <div style="border-right: 1px solid var(--border-color); padding-right: 6px;">
+          <div style="font-size: 22px; font-weight: 700; color: var(--text-main);">{{ component.download_count }}</div>
+          <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Downloads</div>
+        </div>
+        <div>
+          <div style="font-size: 22px; font-weight: 700; color: var(--accent-success);">{{ component.reuse_count }}</div>
+          <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Reused</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metadata Details -->
+    <div class="card">
+      <div class="detail-section-title" style="margin-bottom: 8px;">Classification &amp; Origin</div>
+      <ul class="meta-list">
+        <li class="meta-row">
+          <span class="meta-key">Component Type</span>
+          <span class="meta-val">{{ component.get_component_type_display }}</span>
+        </li>
+        <li class="meta-row">
+          <span class="meta-key">Category</span>
+          <span class="meta-val">{{ component.category.name|default:"Unclassified" }}</span>
+        </li>
+        {% if component.subcategory %}
+          <li class="meta-row">
+            <span class="meta-key">Subcategory</span>
+            <span class="meta-val">{{ component.subcategory.name }}</span>
+          </li>
+        {% endif %}
+        <li class="meta-row">
+          <span class="meta-key">Author</span>
+          <span class="meta-val">{{ component.author }}</span>
+        </li>
+        <li class="meta-row">
+          <span class="meta-key">Version</span>
+          <span class="meta-val" style="font-family: var(--font-mono);">{{ component.version }}</span>
+        </li>
+        <li class="meta-row">
+          <span class="meta-key">Date Added</span>
+          <span class="meta-val">{{ component.created_at|date:"Y-m-d" }}</span>
+        </li>
+        <li class="meta-row">
+          <span class="meta-key">Last Modified</span>
+          <span class="meta-val">{{ component.updated_at|date:"Y-m-d" }}</span>
+        </li>
+      </ul>
+
+      <!-- Tags / Keywords -->
+      <div style="margin-top: 16px;">
+        <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Keywords &amp; Semantic Tags</div>
+        <div class="tag-list">
+          {% for tag in component.get_keywords_list %}
+            <span class="tag-item">#{{ tag }}</span>
+          {% empty %}
+            <span style="font-size: 12px; color: var(--text-light);">No tags specified</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Helpers -->
+    <div style="margin-top: 16px; text-align: center;">
+      <a href="{% url 'component_list' %}" style="font-size: 13px;">&larr; Back to Component Repository</a>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Mark as Reused -->
+<div class="modal-overlay" id="reuseModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 style="font-size: 16px; font-weight: 600; margin: 0;">Record Component Reuse</h3>
+      <button type="button" class="modal-close" id="closeReuseModalBtn">&times;</button>
+    </div>
+
+    <form method="post" action="{% url 'component_mark_reused' component.pk %}">
+      {% csrf_token %}
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+        Document that you are utilizing <strong>{{ component.name }}</strong> in your software project to increment the organization's reuse metrics.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label" for="id_reused_by">Your Name / Development Team *</label>
+        {{ reuse_form.reused_by }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_project_name">Target Project Name *</label>
+        {{ reuse_form.project_name }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_action">Integration Action</label>
+        {{ reuse_form.action }}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_notes">Integration Notes</label>
+        {{ reuse_form.notes }}
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
+        <button type="button" class="btn btn-secondary" id="cancelReuseBtn">Cancel</button>
+        <button type="submit" class="btn btn-success">&#10003; Confirm Reuse</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

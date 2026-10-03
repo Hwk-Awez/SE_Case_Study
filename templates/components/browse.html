@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Browse Components — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Browse Component Classification</h1>
+    <p class="page-subtitle">Navigate the hierarchical software taxonomy by engineering discipline, component type, and subcategory.</p>
+  </div>
+</div>
+
+<div class="detail-grid" style="grid-template-columns: 300px 1fr;">
+  <!-- Left Column: Classification Hierarchy Tree -->
+  <div>
+    <!-- Browse by Type -->
+    <div class="card" style="padding: 14px; margin-bottom: 16px;">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">
+        Filter by Asset Type
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <a href="{% url 'browse' %}?type=CODE" class="btn btn-secondary btn-sm" style="justify-content: flex-start; {% if selected_type == 'CODE' %}background: var(--primary-light); color: var(--primary-color); font-weight: 600; border-color: var(--primary-color);{% endif %}">
+          &lt;/&gt; Code Components
+        </a>
+        <a href="{% url 'browse' %}?type=DESIGN" class="btn btn-secondary btn-sm" style="justify-content: flex-start; {% if selected_type == 'DESIGN' %}background: var(--primary-light); color: var(--primary-color); font-weight: 600; border-color: var(--primary-color);{% endif %}">
+          &#9633; Design Components (UML, ERD)
+        </a>
+      </div>
+    </div>
+
+    <!-- Category Tree -->
+    <div class="card" style="padding: 14px;">
+      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;">
+        Category Hierarchy
+      </div>
+
+      <ul class="browse-tree">
+        {% for cat in root_categories %}
+          <li class="category-node">
+            <div class="category-header">
+              <a href="{% url 'browse' %}?category={{ cat.id }}" style="color: var(--text-main); font-weight: 600; font-size: 14px; {% if selected_cat_id == cat.id and not selected_subcat_id %}color: var(--primary-color); text-decoration: underline;{% endif %}">
+                {{ cat.name }}
+              </a>
+              <span class="badge badge-neutral">{{ cat.components.count }}</span>
+            </div>
+
+            {% if cat.subcategories.all %}
+              <ul class="subcategory-list">
+                {% for sub in cat.subcategories.all %}
+                  <li class="subcategory-item">
+                    <a href="{% url 'browse' %}?category={{ cat.id }}&subcategory={{ sub.id }}" style="font-size: 13px; color: var(--text-main); {% if selected_subcat_id == sub.id %}font-weight: 700; color: var(--primary-color); text-decoration: underline;{% endif %}">
+                      {{ sub.name }}
+                    </a>
+                    {% if sub.subcategories.all %}
+                      <!-- Second level nesting e.g. Auth -> JWT, OAuth -->
+                      <div style="margin-top: 4px; padding-left: 8px;">
+                        {% for subsub in sub.subcategories.all %}
+                          <div style="font-size: 12px; padding: 2px 0;">
+                            &bull; <a href="{% url 'browse' %}?subcategory={{ subsub.id }}" style="color: var(--text-muted); {% if selected_subcat_id == subsub.id %}font-weight: 700; color: var(--primary-color);{% endif %}">
+                              {{ subsub.name }}
+                            </a>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+
+      <div style="margin-top: 12px; text-align: center;">
+        <a href="{% url 'browse' %}" style="font-size: 12px; color: var(--text-muted);">Reset Tree Selection</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Matching Components -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color);">
+      <h2 style="font-size: 16px; font-weight: 600; color: var(--text-main);">
+        {% if active_selection_title %}
+          Viewing: <span style="color: var(--primary-color);">{{ active_selection_title }}</span>
+        {% else %}
+          Select a category or type from the sidebar to browse
+        {% endif %}
+      </h2>
+      {% if components %}
+        <span style="font-size: 13px; color: var(--text-muted);">{{ components|length }} item{{ components|length|pluralize }} found</span>
+      {% endif %}
+    </div>
+
+    {% if components %}
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for comp in components %}
+          <div class="card" style="margin-bottom: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  {% if comp.component_type == 'CODE' %}
+                    <span class="badge badge-code">Code</span>
+                  {% else %}
+                    <span class="badge badge-design">Design</span>
+                  {% endif %}
+                  <a href="{% url 'component_detail' comp.pk %}" style="font-size: 16px; font-weight: 600; color: var(--text-main);">
+                    {{ comp.name }}
+                  </a>
+                  <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">v{{ comp.version }}</span>
+                </div>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px;">
+                  {{ comp.description }}
+                </p>
+                <div style="font-size: 12px; color: var(--text-muted);">
+                  Author: <strong>{{ comp.author }}</strong> &bull; Reuses: <strong style="color: var(--accent-success);">{{ comp.reuse_count }}</strong> &bull; Views: {{ comp.view_count }}
+                </div>
+              </div>
+              <a href="{% url 'component_detail' comp.pk %}" class="btn btn-secondary btn-sm" style="white-space: nowrap;">
+                View Details &rarr;
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card" style="text-align: center; padding: 48px; color: var(--text-muted);">
+        {% if active_selection_title %}
+          <p style="font-size: 15px;">No components currently assigned under <strong>{{ active_selection_title }}</strong>.</p>
+          <a href="{% url 'component_create' %}" class="btn btn-primary btn-sm" style="margin-top: 12px;">+ Add Component to this Category</a>
+        {% else %}
+          <p style="font-size: 15px;">Choose a classification category from the left menu to explore stored components.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

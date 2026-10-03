@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}Repository Report — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header no-print">
+  <div>
+    <h1 class="page-title">Executive Repository Report</h1>
+    <p class="page-subtitle">Summary audit report of software component reuse, categorization, and developer adoption.</p>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <a href="{% url 'export_report_csv' %}" class="btn btn-secondary">
+      &#8681; Export to CSV
+    </a>
+    <button type="button" class="btn btn-primary" id="printReportBtn">
+      &#9113; Print / Save as PDF
+    </button>
+  </div>
+</div>
+
+<!-- Formal Printable Report Sheet -->
+<div class="report-sheet">
+  <div class="report-header">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <h2 class="report-title">SOFTWARE COMPONENT REPOSITORY AUDIT REPORT</h2>
+        <div class="report-subtitle">
+          Internal Software Engineering Metrics &bull; Case Study Audit
+        </div>
+      </div>
+      <div style="text-align: right; font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">
+        Generated: {{ generated_at|date:"Y-m-d H:i" }} UTC<br>
+        Status: Official Repository Snapshot
+      </div>
+    </div>
+  </div>
+
+  <!-- Metric Strip: High Level Counts -->
+  <div class="metric-strip">
+    <div class="metric-strip-item">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Components</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--text-main); margin-top: 2px;">{{ total_components }}</div>
+      <div style="font-size: 12px; color: var(--text-muted);">{{ code_components }} Code &bull; {{ design_components }} Design</div>
+    </div>
+
+    <div class="metric-strip-item">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Classification Categories</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--text-main); margin-top: 2px;">{{ category_count }}</div>
+      <div style="font-size: 12px; color: var(--text-muted);">Active taxonomies</div>
+    </div>
+
+    <div class="metric-strip-item">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Documented Reuses</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--accent-success); margin-top: 2px;">{{ total_reuses }}</div>
+      <div style="font-size: 12px; color: var(--text-muted);">Across projects</div>
+    </div>
+
+    <div class="metric-strip-item">
+      <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Searches</div>
+      <div style="font-size: 24px; font-weight: 700; color: var(--text-main); margin-top: 2px;">{{ total_searches }}</div>
+      <div style="font-size: 12px; color: var(--text-muted);">{{ zero_result_searches }} zero-result queries</div>
+    </div>
+  </div>
+
+  <!-- Performance Highlights -->
+  <div style="margin-bottom: 24px;">
+    <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+      Repository Benchmark Highlights
+    </h3>
+    <table class="data-table" style="font-size: 13px;">
+      <tbody>
+        <tr>
+          <td style="font-weight: 600; width: 220px;">Most Reused Component:</td>
+          <td>
+            <strong>{{ top_reused.name|default:"N/A" }}</strong>
+            {% if top_reused %}
+              ({{ top_reused.reuse_count }} confirmed reuses &bull; Author: {{ top_reused.author }})
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600;">Most Downloaded Component:</td>
+          <td>
+            <strong>{{ top_downloaded.name|default:"N/A" }}</strong>
+            {% if top_downloaded %}
+              ({{ top_downloaded.download_count }} file downloads)
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600;">Most Viewed Component:</td>
+          <td>
+            <strong>{{ top_viewed.name|default:"N/A" }}</strong>
+            {% if top_viewed %}
+              ({{ top_viewed.view_count }} page views)
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600;">Search Zero-Result Rate:</td>
+          <td>
+            {% if total_searches > 0 %}
+              <strong>{{ zero_result_searches }}</strong> of {{ total_searches }} searches (representing unfulfilled developer component demand)
+            {% else %}
+              0 searches logged
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Detailed Inventory Table -->
+  <div>
+    <h3 style="font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+      Component Inventory &amp; Reuse Breakdown
+    </h3>
+    <table class="data-table" style="font-size: 12px;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Component Name</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Author</th>
+          <th>Version</th>
+          <th style="text-align: right;">Views</th>
+          <th style="text-align: right;">Downloads</th>
+          <th style="text-align: right;">Reuses</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for comp in components %}
+          <tr>
+            <td style="font-family: var(--font-mono); color: var(--text-muted);">#{{ comp.id }}</td>
+            <td style="font-weight: 600;">{{ comp.name }}</td>
+            <td>
+              {% if comp.component_type == 'CODE' %}Code{% else %}Design{% endif %}
+            </td>
+            <td>{{ comp.category.name|default:"General" }}</td>
+            <td>{{ comp.author }}</td>
+            <td style="font-family: var(--font-mono);">v{{ comp.version }}</td>
+            <td style="text-align: right;">{{ comp.view_count }}</td>
+            <td style="text-align: right;">{{ comp.download_count }}</td>
+            <td style="text-align: right; font-weight: 600; color: var(--accent-success);">{{ comp.reuse_count }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" style="text-align: center; color: var(--text-muted);">No components recorded.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header" style="border-bottom: none; margin-bottom: 16px;">
+  <div>
+    <h1 class="page-title">Reusable Software Components</h1>
+    <p class="page-subtitle">
+      A centralized internal repository allowing developers to discover, review, download, and reuse verified software modules and architectural designs.
+    </p>
+  </div>
+</div>
+
+<!-- Prominent Search Bar -->
+<div class="search-container">
+  <form action="{% url 'search' %}" method="get" class="search-form">
+    <input
+      type="text"
+      name="q"
+      class="search-input"
+      placeholder="Search reusable components (e.g. 'secure user login', 'email validation', 'JWT', 'database pool')..."
+      autocomplete="off"
+      required
+    >
+    <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">Search</button>
+  </form>
+  <div class="search-meta-note">
+    <span>Tip: Supports keyword queries and semantic concept matching (e.g. searching <em>"secure login"</em> matches JWT Authentication).</span>
+    {% if semantic_search_enabled %}
+      <span class="search-status-tag status-active">Vector Search: Connected</span>
+    {% else %}
+      <span class="search-status-tag status-fallback">Local Engine: Active</span>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Key Repository Statistics -->
+<div class="stats-grid">
+  <div class="stat-box">
+    <div class="stat-label">Total Components</div>
+    <div class="stat-value">{{ total_components }}</div>
+    <div class="stat-desc">Indexed across all categories</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Code Components</div>
+    <div class="stat-value">{{ code_components }}</div>
+    <div class="stat-desc">Utilities, modules &amp; algorithms</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Design Components</div>
+    <div class="stat-value">{{ design_components }}</div>
+    <div class="stat-desc">UML, ER diagrams &amp; blueprints</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-label">Total Reuses</div>
+    <div class="stat-value" style="color: var(--accent-success);">{{ total_reuses }}</div>
+    <div class="stat-desc">Documented reuses in projects</div>
+  </div>
+</div>
+
+<!-- Recently Added Components Section -->
+<div style="margin-top: 28px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <h2 style="font-size: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-main);">
+      Recently Added Components
+    </h2>
+    <a href="{% url 'component_list' %}" style="font-size: 13px; font-weight: 500;">View All Components &rarr;</a>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Component Name</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Author</th>
+          <th>Version</th>
+          <th>Date Added</th>
+          <th>Reuses</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for comp in recent_components %}
+          <tr>
+            <td>
+              <a href="{% url 'component_detail' comp.pk %}" style="font-weight: 600; color: var(--text-main);">
+                {{ comp.name }}
+              </a>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                {{ comp.description|truncatewords:12 }}
+              </div>
+            </td>
+            <td>
+              {% if comp.component_type == 'CODE' %}
+                <span class="badge badge-code">Code</span>
+              {% else %}
+                <span class="badge badge-design">Design</span>
+              {% endif %}
+            </td>
+            <td style="font-size: 13px;">
+              {% if comp.category %}{{ comp.category.name }}{% endif %}
+              {% if comp.subcategory %}&rarr; {{ comp.subcategory.name }}{% endif %}
+            </td>
+            <td style="font-size: 13px; color: var(--text-muted);">{{ comp.author }}</td>
+            <td style="font-family: var(--font-mono); font-size: 12px;">v{{ comp.version }}</td>
+            <td style="font-size: 13px; color: var(--text-muted);">{{ comp.created_at|date:"M d, Y" }}</td>
+            <td style="font-weight: 600; color: var(--accent-success);">{{ comp.reuse_count }}</td>
+            <td>
+              <a href="{% url 'component_detail' comp.pk %}" class="btn btn-secondary btn-sm">Details</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              No components registered in the repository yet.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

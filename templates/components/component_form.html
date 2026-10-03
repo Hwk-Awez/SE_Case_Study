@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Publish a reusable software asset to the organization's central repository.</p>
+  </div>
+  <div>
+    <a href="{% url 'component_list' %}" class="btn btn-secondary">&larr; Cancel</a>
+  </div>
+</div>
+
+<div class="card" style="max-width: 760px; margin: 0 auto;">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="message message-error" style="margin-bottom: 16px;">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <!-- Component Name -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.name.id_for_label }}">Component Name *</label>
+      {{ form.name }}
+      {% if form.name.errors %}
+        <span class="form-help" style="color: var(--accent-danger);">{{ form.name.errors.0 }}</span>
+      {% else %}
+        <span class="form-help">Give the component a descriptive title (e.g. "JWT Authentication Module").</span>
+      {% endif %}
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.description.id_for_label }}">Description &amp; Specification *</label>
+      {{ form.description }}
+      {% if form.description.errors %}
+        <span class="form-help" style="color: var(--accent-danger);">{{ form.description.errors.0 }}</span>
+      {% else %}
+        <span class="form-help">Describe functionality, prerequisites, architectural dependencies, and usage examples.</span>
+      {% endif %}
+    </div>
+
+    <!-- Type and Version -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div class="form-group">
+        <label class="form-label" for="{{ form.component_type.id_for_label }}">Component Type *</label>
+        {{ form.component_type }}
+        {% if form.component_type.errors %}
+          <span class="form-help" style="color: var(--accent-danger);">{{ form.component_type.errors.0 }}</span>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.version.id_for_label }}">Version *</label>
+        {{ form.version }}
+        {% if form.version.errors %}
+          <span class="form-help" style="color: var(--accent-danger);">{{ form.version.errors.0 }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Category and Subcategory -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div class="form-group">
+        <label class="form-label" for="{{ form.category.id_for_label }}">Primary Category *</label>
+        <select name="category" id="id_category" class="form-select" required>
+          <option value="">-- Select Primary Category --</option>
+          {% for cat in form.fields.category.queryset %}
+            <option value="{{ cat.id }}" {% if form.category.value|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
+              {{ cat.name }}
+            </option>
+          {% endfor %}
+        </select>
+        {% if form.category.errors %}
+          <span class="form-help" style="color: var(--accent-danger);">{{ form.category.errors.0 }}</span>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="{{ form.subcategory.id_for_label }}">Subcategory (Optional)</label>
+        <select name="subcategory" id="id_subcategory" class="form-select">
+          <option value="">-- Select Subcategory (Optional) --</option>
+          {% for sub in form.fields.subcategory.queryset %}
+            <option
+              value="{{ sub.id }}"
+              data-parent="{{ sub.parent_id }}"
+              {% if form.subcategory.value|stringformat:"s" == sub.id|stringformat:"s" %}selected{% endif %}
+            >
+              {{ sub.name }} ({{ sub.parent.name }})
+            </option>
+          {% endfor %}
+        </select>
+        {% if form.subcategory.errors %}
+          <span class="form-help" style="color: var(--accent-danger);">{{ form.subcategory.errors.0 }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Keywords -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.keywords.id_for_label }}">Keywords / Semantic Tags *</label>
+      {{ form.keywords }}
+      {% if form.keywords.errors %}
+        <span class="form-help" style="color: var(--accent-danger);">{{ form.keywords.errors.0 }}</span>
+      {% else %}
+        <span class="form-help">Comma-separated terms to assist in search retrieval (e.g. <code>jwt, auth, token, security, rfc7519</code>).</span>
+      {% endif %}
+    </div>
+
+    <!-- Author -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.author.id_for_label }}">Author / Engineering Team *</label>
+      {{ form.author }}
+      {% if form.author.errors %}
+        <span class="form-help" style="color: var(--accent-danger);">{{ form.author.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <!-- File Upload -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.file.id_for_label }}">Upload Component Asset File</label>
+      {{ form.file }}
+      {% if form.instance.file %}
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+          Currently attached: <strong>{{ form.instance.file_name }}</strong>
+        </div>
+      {% endif %}
+      {% if form.file.errors %}
+        <span class="form-help" style="color: var(--accent-danger);">{{ form.file.errors.0 }}</span>
+      {% else %}
+        <span class="form-help">Source code (.py, .js, .java, .sql), design diagram (.puml, .svg, .drawio, .png), or specification document.</span>
+      {% endif %}
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <a href="{% url 'component_list' %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary" style="padding: 8px 20px;">
+        {% if form.instance.pk %}Update Component{% else %}Publish Component{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

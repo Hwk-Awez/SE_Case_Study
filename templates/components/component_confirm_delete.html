@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ component.name }} — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Delete Component</h1>
+    <p class="page-subtitle">Please confirm repository asset removal.</p>
+  </div>
+</div>
+
+<div class="card" style="max-width: 580px; margin: 30px auto; border-color: #fecaca; background: #fff;">
+  <h2 style="font-size: 17px; font-weight: 600; color: var(--accent-danger); margin-bottom: 12px;">
+    Are you sure you want to delete this component?
+  </h2>
+
+  <div style="background: var(--surface-alt); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 16px; border: 1px solid var(--border-color);">
+    <div style="font-weight: 600; font-size: 15px;">{{ component.name }}</div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      Type: {{ component.get_component_type_display }} &bull; Version: {{ component.version }} &bull; Author: {{ component.author }}
+    </div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      Current Reuses: <strong>{{ component.reuse_count }}</strong> &bull; Total Downloads: <strong>{{ component.download_count }}</strong>
+    </div>
+  </div>
+
+  <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+    This action will remove the component specification, attached file artifacts, and historical reuse logs from the catalog.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+      <a href="{% url 'component_detail' component.pk %}" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-danger" style="background-color: var(--accent-danger); color: #fff;">
+        Yes, Delete Component
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
