@@ -14,7 +14,7 @@
 </div>
 
 <div class="card" style="max-width: 760px; margin: 0 auto;">
-  <form method="post" enctype="multipart/form-data">
+  <form method="post">
     {% csrf_token %}
 
     {% if form.non_field_errors %}
@@ -118,22 +118,6 @@
       {{ form.author }}
       {% if form.author.errors %}
         <span class="form-help" style="color: var(--accent-danger);">{{ form.author.errors.0 }}</span>
-      {% endif %}
-    </div>
-
-    <!-- File Upload -->
-    <div class="form-group">
-      <label class="form-label" for="{{ form.file.id_for_label }}">Upload Component Asset File</label>
-      {{ form.file }}
-      {% if form.instance.file %}
-        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
-          Currently attached: <strong>{{ form.instance.file_name }}</strong>
-        </div>
-      {% endif %}
-      {% if form.file.errors %}
-        <span class="form-help" style="color: var(--accent-danger);">{{ form.file.errors.0 }}</span>
-      {% else %}
-        <span class="form-help">Source code (.py, .js, .java, .sql), design diagram (.puml, .svg, .drawio, .png), or specification document.</span>
       {% endif %}
     </div>
 

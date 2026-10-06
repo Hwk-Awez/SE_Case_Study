@@ -4,6 +4,11 @@ version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
     "django>=6.1.1",
+    "langchain>=1.4.3",
+    "langchain-community>=0.4.2",
+    "markdown>=3.11",
+    "pinecone>=10.0.0",
     "psycopg[binary]>=3.3.6",
     "python-dotenv>=1.2.4",
+    "sentence-transformers>=6.1.0",
 ]

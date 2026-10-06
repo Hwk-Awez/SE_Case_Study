@@ -44,7 +44,6 @@
         <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Recently Added</option>
         <option value="reused" {% if selected_sort == 'reused' %}selected{% endif %}>Most Reused</option>
         <option value="views" {% if selected_sort == 'views' %}selected{% endif %}>Most Viewed</option>
-        <option value="downloads" {% if selected_sort == 'downloads' %}selected{% endif %}>Most Downloaded</option>
         <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>Component Name (A-Z)</option>
       </select>
     </div>
@@ -107,21 +106,12 @@
               <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase;">Reuses</div>
             </div>
             <div>
-              <div style="font-weight: 700; color: var(--text-main); font-size: 16px;">{{ comp.download_count }}</div>
-              <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase;">Downloads</div>
-            </div>
-            <div>
               <div style="font-weight: 700; color: var(--text-main); font-size: 16px;">{{ comp.view_count }}</div>
               <div style="font-size: 11px; color: var(--text-light); text-transform: uppercase;">Views</div>
             </div>
           </div>
 
           <div style="display: flex; gap: 6px;">
-            {% if comp.file %}
-              <a href="{% url 'component_download' comp.pk %}" class="btn btn-secondary btn-sm" title="Download component file">
-                Download
-              </a>
-            {% endif %}
             <a href="{% url 'component_detail' comp.pk %}" class="btn btn-primary btn-sm">
               View Details &rarr;
             </a>
@@ -130,9 +120,16 @@
       </div>
     </div>
   {% empty %}
-    <div class="card" style="text-align: center; padding: 40px; color: var(--text-muted);">
-      <p style="font-size: 16px; margin-bottom: 12px;">No components match the selected filters.</p>
-      <a href="{% url 'component_list' %}" class="btn btn-secondary">Reset Filters</a>
+    <div class="card" style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
+      {% if selected_type or selected_category or selected_sort != 'newest' %}
+        <p style="font-size: 16px; margin-bottom: 12px;">No components match the selected filters.</p>
+        <a href="{% url 'component_list' %}" class="btn btn-secondary">Reset Filters</a>
+      {% else %}
+        <div style="font-size: 40px; margin-bottom: 12px;">📦</div>
+        <h3 style="font-size: 18px; font-weight: 600; color: var(--text-main); margin-bottom: 8px;">No Components in the Repository</h3>
+        <p style="font-size: 14px; margin-bottom: 16px;">All dummy components have been removed. You can register your own components below.</p>
+        <a href="{% url 'component_create' %}" class="btn btn-primary">+ Add New Component</a>
+      {% endif %}
     </div>
   {% endfor %}
 </div>

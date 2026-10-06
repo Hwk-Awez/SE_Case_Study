@@ -1,180 +1,244 @@
-"""
-Search Service Layer
-====================
-Provides a unified search interface for the Software Component Catalog.
-
-Handles:
-1. Intent check for Semantic Search (Pinecone Vector similarity).
-2. Graceful fallback to multi-field relational search with concept/synonym expansion.
-3. Automatic query logging into SearchQuery table for analytics.
-"""
-
 import re
-from django.db.models import Q, Case, When, Value, IntegerField
-from components.models import Component, SearchQuery, Category
-from .semantic_search import is_semantic_search_configured, query_semantic_index
+from collections import defaultdict
+from django.db.models import Q, Count
+from components.models import Component, ComponentWord, ComponentKeyword, Category
 
-
-# Domain synonym map for natural query understanding in fallback mode
-# Helps bridge common colloquial student/developer search terms with stored components
-CONCEPT_SYNONYMS = {
-    'login': ['auth', 'authentication', 'jwt', 'security', 'token', 'credentials', 'session'],
-    'signin': ['auth', 'authentication', 'jwt', 'security'],
-    'secure': ['security', 'auth', 'jwt', 'crypto', 'hash', 'token'],
-    'checker': ['validation', 'validate', 'validator', 'format', 'verify'],
-    'check': ['validation', 'validate', 'validator', 'verify'],
-    'email': ['validation', 'email', 'format', 'regex'],
-    'database': ['db', 'sql', 'connection', 'postgres', 'pool', 'schema', 'sqlite'],
-    'db': ['database', 'sql', 'connection', 'orm'],
-    'diagram': ['uml', 'architecture', 'er', 'design', 'class', 'flow'],
-    'erd': ['er', 'diagram', 'database', 'schema', 'e-commerce'],
-    'find': ['search', 'searching', 'binary', 'lookup'],
-    'sorting': ['sort', 'algorithm', 'merge', 'quick', 'order'],
-    'structure': ['architecture', 'mvc', 'design', 'pattern'],
-}
-
+# Standard stop-words to ignore during token-based indexing/search
 STOP_WORDS = {
-    'i', 'me', 'my', 'we', 'our', 'you', 'your', 'need', 'want', 'looking',
-    'for', 'a', 'an', 'the', 'is', 'are', 'was', 'were', 'to', 'of', 'in',
-    'on', 'at', 'by', 'with', 'from', 'something', 'help', 'some', 'any'
+    'i', 'me', 'my', 'we', 'our', 'you', 'your', 'need', 'want',
+    'looking', 'for', 'a', 'an', 'the', 'is', 'are', 'was', 'were',
+    'to', 'of', 'in', 'on', 'at', 'by', 'with', 'from', 'some',
+    'any', 'help', 'something', 'and', 'or', 'that', 'this', 'it'
 }
 
 
-def tokenize_query(query_text):
-    """
-    Cleans punctuation and splits query into individual semantic tokens,
-    excluding common filler stop words.
-    """
-    cleaned = re.sub(r'[^\w\s-]', '', query_text.lower())
-    words = cleaned.split()
-    tokens = [w for w in words if w not in STOP_WORDS and len(w) > 1]
-    return tokens if tokens else [query_text.lower().strip()]
+def tokenize(text: str) -> list[str]:
+    """Return lower-case word tokens from *text* (punctuation stripped)."""
+    if not text:
+        return []
+    # Replace punctuation characters with spaces to avoid concatenating words
+    cleaned = re.sub(r'[^\w\s-]', ' ', text.lower())
+    raw_words = cleaned.split()
+    tokens = set()
+    for w in raw_words:
+        w_clean = w.strip('-')
+        if len(w_clean) >= 2 and w_clean not in STOP_WORDS:
+            tokens.add(w_clean)
+            # If word contains hyphens, also index individual parts
+            if '-' in w_clean:
+                subparts = w_clean.split('-')
+                for part in subparts:
+                    if len(part) >= 2 and part not in STOP_WORDS:
+                        tokens.add(part)
+                # Also include unhyphenated form (e.g. e-commerce -> ecommerce)
+                tokens.add(w_clean.replace('-', ''))
+    return list(tokens)
 
 
-def execute_keyword_fallback(query_text, component_type=None, category_id=None):
+def index_component_tokens(component):
     """
-    Performs intelligent multi-field database search.
-    Expands common terms (e.g. 'secure user login' -> 'auth', 'jwt')
-    and scores matches higher if they occur in name or keywords.
+    Extracts tokens from component metadata and synchronizes ComponentWord
+    and ComponentKeyword tables for fast querying.
     """
-    tokens = tokenize_query(query_text)
-    
-    # Expand tokens with domain synonyms
-    expanded_terms = set(tokens)
-    for token in tokens:
-        if token in CONCEPT_SYNONYMS:
-            expanded_terms.update(CONCEPT_SYNONYMS[token])
+    if not component or not component.pk:
+        return
 
-    # Base QuerySet
+    try:
+        # 1. Sync ComponentKeyword tags
+        if component.keywords:
+            kw_list = [k.strip().lower() for k in component.keywords.split(',') if k.strip()]
+            existing_kws = set(ComponentKeyword.objects.filter(component=component).values_list('keyword', flat=True))
+            new_kws = [ComponentKeyword(component=component, keyword=kw) for kw in set(kw_list) - existing_kws]
+            if new_kws:
+                ComponentKeyword.objects.bulk_create(new_kws, ignore_conflicts=True)
+
+        # 2. Extract and sync ComponentWord tokens
+        text_sources = [
+            component.name or '',
+            component.description or '',
+            component.keywords or '',
+            component.author or '',
+            component.category.name if component.category else '',
+            component.subcategory.name if component.subcategory else '',
+        ]
+        full_text = ' '.join(text_sources)
+        tokens = set(tokenize(full_text))
+
+        existing_words = set(ComponentWord.objects.filter(component=component).values_list('word', flat=True))
+        to_create = [ComponentWord(component=component, word=w) for w in (tokens - existing_words)]
+        if to_create:
+            ComponentWord.objects.bulk_create(to_create, ignore_conflicts=True)
+
+        to_delete = existing_words - tokens
+        if to_delete:
+            ComponentWord.objects.filter(component=component, word__in=to_delete).delete()
+    except Exception as e:
+        # Fail safe - indexing error should not crash request handling
+        pass
+
+
+def execute_token_search(tokens: list[str], component_type=None, category_id=None):
+    """Legacy helper: find components that have any of the supplied *tokens*."""
+    if not tokens:
+        return Component.objects.none()
+
     qs = Component.objects.select_related('category', 'subcategory')
-
-    if component_type and component_type in ['CODE', 'DESIGN']:
+    if component_type in ['CODE', 'DESIGN']:
         qs = qs.filter(component_type=component_type)
-
     if category_id:
         qs = qs.filter(Q(category_id=category_id) | Q(subcategory_id=category_id))
 
-    # Construct Q filters across tokens
-    exact_q = (
-        Q(name__icontains=query_text) |
-        Q(description__icontains=query_text) |
-        Q(keywords__icontains=query_text) |
-        Q(category__name__icontains=query_text)
-    )
-
-    token_q = Q()
-    for term in expanded_terms:
-        term_q = (
-            Q(name__icontains=term) |
-            Q(description__icontains=term) |
-            Q(keywords__icontains=term) |
-            Q(category__name__icontains=term) |
-            Q(subcategory__name__icontains=term) |
-            Q(author__icontains=term)
-        )
-        token_q |= term_q
-
-    combined_q = exact_q | token_q
-    filtered_qs = qs.filter(combined_q)
-
-    # Relevance scoring: exact name/keywords matches are ranked higher
-    scored_qs = filtered_qs.annotate(
-        relevance=Case(
-            When(name__icontains=query_text, then=Value(5)),
-            When(keywords__icontains=query_text, then=Value(4)),
-            When(description__icontains=query_text, then=Value(2)),
-            default=Value(1),
-            output_field=IntegerField()
-        )
-    ).order_by('-relevance', '-reuse_count', '-view_count')
-
-    return list(scored_qs)
+    matched = ComponentWord.objects.filter(word__in=tokens, component__in=qs)
+    annotated = matched.values('component').annotate(relevance=Count('id')).order_by('-relevance')
+    component_ids = [item['component'] for item in annotated]
+    ordering = {cid: i for i, cid in enumerate(component_ids)}
+    components = Component.objects.filter(id__in=component_ids).select_related('category', 'subcategory')
+    components = sorted(components, key=lambda c: ordering.get(c.id, 0))
+    return components
 
 
 def search_components(query_text, component_type=None, category_id=None, record_query=True):
     """
-    Main entry point for repository search.
-    
-    1. Tries semantic vector search if Pinecone is configured.
-    2. Gracefully falls back to concept-expanded keyword search if not configured.
-    3. Logs the search query for analytics and zero-result monitoring.
-    
-    Returns:
-        {
-            'results': list of Component objects,
-            'count': int,
-            'search_mode': 'semantic' | 'keyword',
-            'note': str (explaining the search mechanism)
-        }
+    Robust hybrid search service:
+    1. Direct field substring matching on Component (name, keywords, description, author, category).
+    2. Token-level matching across fields and ComponentWord / ComponentKeyword indexes.
+    3. Intelligent relevance scoring so the closest matching components rank at the top.
     """
     cleaned_query = query_text.strip() if query_text else ""
+
+    qs = Component.objects.select_related('category', 'subcategory')
+    if component_type in ['CODE', 'DESIGN']:
+        qs = qs.filter(component_type=component_type)
+    if category_id:
+        qs = qs.filter(Q(category_id=category_id) | Q(subcategory_id=category_id))
+
     if not cleaned_query:
-        # If empty query, return all matching filters
-        qs = Component.objects.select_related('category', 'subcategory')
-        if component_type and component_type in ['CODE', 'DESIGN']:
-            qs = qs.filter(component_type=component_type)
-        if category_id:
-            qs = qs.filter(Q(category_id=category_id) | Q(subcategory_id=category_id))
-        return {
-            'results': list(qs),
-            'count': qs.count(),
-            'search_mode': 'direct',
-            'note': 'Displaying all available components.'
-        }
+        # Empty query -> return all filtered components
+        results = list(qs.order_by('-created_at'))
+        mode = 'direct'
+        note = 'Displaying all components.'
+    else:
+        tokens = tokenize(cleaned_query)
+        query_lower = cleaned_query.lower()
+        scores = defaultdict(int)
+        matched_map = {}
 
-    search_mode = 'keyword'
-    note = "Search executed via Local Keyword & Concept Engine (Pinecone credentials not configured)."
-    results = []
+        # -------------------------------------------------------------
+        # 1. Full-phrase / Direct Field Matches
+        # -------------------------------------------------------------
+        # Name match (highest weight)
+        for comp in qs.filter(name__icontains=cleaned_query):
+            matched_map[comp.id] = comp
+            c_name_lower = comp.name.lower()
+            if c_name_lower == query_lower:
+                scores[comp.id] += 120
+            elif c_name_lower.startswith(query_lower):
+                scores[comp.id] += 80
+            else:
+                scores[comp.id] += 60
 
-    # 1. Attempt Semantic Search if configured
-    if is_semantic_search_configured():
-        matched_ids, err = query_semantic_index(cleaned_query)
-        if matched_ids:
-            search_mode = 'semantic'
-            note = "Search executed via Pinecone Vector Similarity Search."
-            # Retrieve components in vector score order
-            components_dict = {
-                c.id: c for c in Component.objects.filter(id__in=matched_ids).select_related('category', 'subcategory')
-            }
-            results = [components_dict[cid] for cid in matched_ids if cid in components_dict]
-            
-            # Apply optional filters
-            if component_type and component_type in ['CODE', 'DESIGN']:
-                results = [c for c in results if c.component_type == component_type]
-            if category_id:
-                results = [c for c in results if c.category_id == int(category_id) or c.subcategory_id == int(category_id)]
+        # Keywords match
+        for comp in qs.filter(keywords__icontains=cleaned_query):
+            matched_map[comp.id] = comp
+            scores[comp.id] += 50
 
-    # 2. Fallback to Local Search if semantic search was not configured or produced no results
-    if not results and search_mode == 'keyword':
-        results = execute_keyword_fallback(cleaned_query, component_type=component_type, category_id=category_id)
+        # Description match
+        for comp in qs.filter(description__icontains=cleaned_query):
+            matched_map[comp.id] = comp
+            scores[comp.id] += 25
 
-    # 3. Log query into SearchQuery table for analytics
+        # Author match
+        for comp in qs.filter(author__icontains=cleaned_query):
+            matched_map[comp.id] = comp
+            scores[comp.id] += 20
+
+        # Category / Subcategory match
+        for comp in qs.filter(Q(category__name__icontains=cleaned_query) | Q(subcategory__name__icontains=cleaned_query)):
+            matched_map[comp.id] = comp
+            scores[comp.id] += 20
+
+        # -------------------------------------------------------------
+        # 2. Token-level Field Matches
+        # -------------------------------------------------------------
+        for token in tokens:
+            token_q = (
+                Q(name__icontains=token) |
+                Q(keywords__icontains=token) |
+                Q(description__icontains=token) |
+                Q(author__icontains=token)
+            )
+            for comp in qs.filter(token_q):
+                matched_map[comp.id] = comp
+                c_name = comp.name.lower()
+                c_kw = (comp.keywords or '').lower()
+                c_desc = (comp.description or '').lower()
+                if token in c_name:
+                    scores[comp.id] += 30
+                if token in c_kw:
+                    scores[comp.id] += 20
+                if token in c_desc:
+                    scores[comp.id] += 10
+
+        # -------------------------------------------------------------
+        # 3. ComponentWord and ComponentKeyword Database Hits
+        # -------------------------------------------------------------
+        if tokens:
+            try:
+                word_matches = (
+                    ComponentWord.objects
+                    .filter(word__in=tokens, component__in=qs)
+                    .values('component')
+                    .annotate(cnt=Count('id'))
+                )
+                for item in word_matches:
+                    cid = item['component']
+                    scores[cid] += item['cnt'] * 15
+                    if cid not in matched_map:
+                        c_obj = qs.filter(id=cid).first()
+                        if c_obj:
+                            matched_map[cid] = c_obj
+
+                kw_matches = (
+                    ComponentKeyword.objects
+                    .filter(keyword__in=tokens, component__in=qs)
+                    .values('component')
+                    .annotate(cnt=Count('id'))
+                )
+                for item in kw_matches:
+                    cid = item['component']
+                    scores[cid] += item['cnt'] * 20
+                    if cid not in matched_map:
+                        c_obj = qs.filter(id=cid).first()
+                        if c_obj:
+                            matched_map[cid] = c_obj
+            except Exception:
+                pass
+
+        # -------------------------------------------------------------
+        # 4. Relevance Sorting
+        # -------------------------------------------------------------
+        results = sorted(
+            matched_map.values(),
+            key=lambda c: (
+                scores[c.id],
+                c.reuse_count,
+                c.view_count,
+                c.created_at
+            ),
+            reverse=True
+        )
+
+        mode = 'keyword'
+        note = f"Found {len(results)} matching component{'s' if len(results) != 1 else ''} for '{cleaned_query}'."
+
+    # Record search query analytics
     if record_query and cleaned_query:
+        from components.models import SearchQuery
         try:
             SearchQuery.objects.create(
                 query_text=cleaned_query,
                 results_count=len(results),
-                search_mode=search_mode
+                search_mode=mode,
             )
         except Exception:
             pass
@@ -182,6 +246,6 @@ def search_components(query_text, component_type=None, category_id=None, record_
     return {
         'results': results,
         'count': len(results),
-        'search_mode': search_mode,
-        'note': note
+        'search_mode': mode,
+        'note': note,
     }

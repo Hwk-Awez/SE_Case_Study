@@ -8,10 +8,7 @@
     <h1 class="page-title">Executive Repository Report</h1>
     <p class="page-subtitle">Summary audit report of software component reuse, categorization, and developer adoption.</p>
   </div>
-  <div style="display: flex; gap: 8px;">
-    <a href="{% url 'export_report_csv' %}" class="btn btn-secondary">
-      &#8681; Export to CSV
-    </a>
+  <div>
     <button type="button" class="btn btn-primary" id="printReportBtn">
       &#9113; Print / Save as PDF
     </button>
@@ -79,15 +76,6 @@
           </td>
         </tr>
         <tr>
-          <td style="font-weight: 600;">Most Downloaded Component:</td>
-          <td>
-            <strong>{{ top_downloaded.name|default:"N/A" }}</strong>
-            {% if top_downloaded %}
-              ({{ top_downloaded.download_count }} file downloads)
-            {% endif %}
-          </td>
-        </tr>
-        <tr>
           <td style="font-weight: 600;">Most Viewed Component:</td>
           <td>
             <strong>{{ top_viewed.name|default:"N/A" }}</strong>
@@ -125,7 +113,6 @@
           <th>Author</th>
           <th>Version</th>
           <th style="text-align: right;">Views</th>
-          <th style="text-align: right;">Downloads</th>
           <th style="text-align: right;">Reuses</th>
         </tr>
       </thead>
@@ -141,12 +128,11 @@
             <td>{{ comp.author }}</td>
             <td style="font-family: var(--font-mono);">v{{ comp.version }}</td>
             <td style="text-align: right;">{{ comp.view_count }}</td>
-            <td style="text-align: right;">{{ comp.download_count }}</td>
             <td style="text-align: right; font-weight: 600; color: var(--accent-success);">{{ comp.reuse_count }}</td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="9" style="text-align: center; color: var(--text-muted);">No components recorded.</td>
+            <td colspan="8" style="text-align: center; color: var(--text-muted);">No components recorded.</td>
           </tr>
         {% endfor %}
       </tbody>

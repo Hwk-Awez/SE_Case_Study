@@ -10,8 +10,47 @@ from django.utils import timezone
 
 from .models import Component, Category, ReuseRecord, SearchQuery, ComponentUsage, ComponentKeyword
 from .forms import ComponentForm, ReuseRecordForm
-from .services.search import search_components
-from .services.semantic_search import index_component, is_semantic_search_configured
+
+# ----------------------------------------------------------------------
+# 5. Group creation (root Category) – requires authentication
+# ----------------------------------------------------------------------
+from django.contrib.auth.decorators import login_required
+from .forms import GroupForm
+
+@login_required
+def group_create_view(request):
+    """Render and process the group‑creation form.
+
+    Only logged‑in users can create a new Category (Group).
+    After a successful POST the user is redirected to the home or component list
+    page with a success message.
+    """
+    if request.method == "POST":
+        form = GroupForm(request.POST)
+        if form.is_valid():
+            group = form.save()
+            messages.success(request, f"Group '{group.name}' created successfully.")
+            return redirect('home')
+    else:
+        form = GroupForm()
+
+    existing_groups = Category.objects.filter(parent__isnull=True).prefetch_related('subcategories')
+    return render(request, "components/group_form.html", {
+        "form": form,
+        "title": "Add Component Group",
+        "existing_groups": existing_groups,
+    })
+try:
+    from .services.search import search_components, index_component_tokens
+except ImportError:
+    search_components = None
+    index_component_tokens = None
+
+try:
+    from .services.semantic_search import index_component, is_semantic_search_configured
+except ImportError:
+    index_component = None
+    is_semantic_search_configured = None
 
 
 # ==============================================================================
@@ -55,7 +94,7 @@ def component_list_view(request):
     """
     comp_type = request.GET.get('type', '')
     category_slug = request.GET.get('category', '')
-    sort_by = request.GET.get('sort', '-created_at')
+    sort_by = request.GET.get('sort', 'newest')
 
     components_qs = Component.objects.select_related('category', 'subcategory')
 
@@ -75,7 +114,6 @@ def component_list_view(request):
         'newest': '-created_at',
         'reused': '-reuse_count',
         'views': '-view_count',
-        'downloads': '-download_count',
         'name': 'name',
     }
     order_field = valid_sorts.get(sort_by, '-created_at')
@@ -130,35 +168,6 @@ def component_detail_view(request, pk):
     return render(request, 'components/component_detail.html', context)
 
 
-def download_component_view(request, pk):
-    """
-    Handles downloading the component's file.
-    Increments download_count on the component.
-    """
-    component = get_object_or_404(Component, pk=pk)
-
-    if not component.file:
-        messages.error(request, "This component does not have an attached file.")
-        return redirect('component_detail', pk=pk)
-
-    # Increment download count
-    Component.objects.filter(pk=pk).update(download_count=component.download_count + 1)
-
-    # Record usage
-    ComponentUsage.objects.create(
-        component=component,
-        action_type='DOWNLOAD',
-        user=request.user if request.user.is_authenticated else None,
-        ip_address=request.META.get('REMOTE_ADDR')
-    )
-
-    try:
-        response = FileResponse(component.file.open('rb'), as_attachment=True, filename=component.file_name())
-        return response
-    except FileNotFoundError:
-        raise Http404("File not found on storage.")
-
-
 def mark_reused_view(request, pk):
     """
     Increments reuse count and creates a persistent ReuseRecord.
@@ -197,20 +206,20 @@ def mark_reused_view(request, pk):
 # ==============================================================================
 def component_create_view(request):
     """
-    Form to add a new reusable component with validation and file upload.
+    Form to add a new reusable component specification with validation.
     """
     if request.method == 'POST':
-        form = ComponentForm(request.POST, request.FILES)
+        form = ComponentForm(request.POST)
         if form.is_valid():
             component = form.save()
 
-            # Index keywords
-            if component.keywords:
-                for kw in component.get_keywords_list():
-                    ComponentKeyword.objects.get_or_create(component=component, keyword=kw.lower())
+            # Index tokens and keywords for search
+            if index_component_tokens:
+                index_component_tokens(component)
 
             # Conceptually trigger vector indexing
-            index_component(component)
+            if index_component:
+                index_component(component)
 
             messages.success(request, f"Component '{component.name}' successfully added to the catalog!")
             return redirect('component_detail', pk=component.pk)
@@ -227,18 +236,17 @@ def component_update_view(request, pk):
     component = get_object_or_404(Component, pk=pk)
 
     if request.method == 'POST':
-        form = ComponentForm(request.POST, request.FILES, instance=component)
+        form = ComponentForm(request.POST, instance=component)
         if form.is_valid():
             component = form.save()
 
-            # Re-index keywords
-            ComponentKeyword.objects.filter(component=component).delete()
-            if component.keywords:
-                for kw in component.get_keywords_list():
-                    ComponentKeyword.objects.get_or_create(component=component, keyword=kw.lower())
+            # Re-index tokens and keywords for search
+            if index_component_tokens:
+                index_component_tokens(component)
 
             # Trigger vector re-indexing
-            index_component(component)
+            if index_component:
+                index_component(component)
 
             messages.success(request, f"Component '{component.name}' updated successfully.")
             return redirect('component_detail', pk=component.pk)
@@ -346,7 +354,6 @@ def analytics_view(request):
     """
     # Top metrics
     most_viewed = Component.objects.order_by('-view_count')[:5]
-    most_downloaded = Component.objects.order_by('-download_count')[:5]
     most_reused = Component.objects.order_by('-reuse_count')[:5]
 
     # Search Query Analytics
@@ -369,7 +376,6 @@ def analytics_view(request):
 
     context = {
         'most_viewed': most_viewed,
-        'most_downloaded': most_downloaded,
         'most_reused': most_reused,
         'total_searches': total_searches,
         'zero_result_count': zero_result_count,
@@ -381,12 +387,12 @@ def analytics_view(request):
 
 
 # ==============================================================================
-# 9. Reports & Exports
+# 9. Reports & Print
 # ==============================================================================
 def reports_view(request):
     """
     Summary repository report with statistics, top contributors,
-    and options to print or export as CSV.
+    and option to print or save as PDF.
     """
     total_components = Component.objects.count()
     code_components = Component.objects.filter(component_type='CODE').count()
@@ -394,7 +400,6 @@ def reports_view(request):
     category_count = Category.objects.count()
 
     top_viewed = Component.objects.order_by('-view_count').first()
-    top_downloaded = Component.objects.order_by('-download_count').first()
     top_reused = Component.objects.order_by('-reuse_count').first()
 
     total_searches = SearchQuery.objects.count()
@@ -409,7 +414,6 @@ def reports_view(request):
         'design_components': design_components,
         'category_count': category_count,
         'top_viewed': top_viewed,
-        'top_downloaded': top_downloaded,
         'top_reused': top_reused,
         'total_searches': total_searches,
         'zero_result_searches': zero_result_searches,
@@ -418,48 +422,6 @@ def reports_view(request):
         'generated_at': timezone.now(),
     }
     return render(request, 'components/reports.html', context)
-
-
-def export_report_csv_view(request):
-    """
-    Exports a clean CSV file of all components and their reuse metrics.
-    """
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="component_repository_report.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow([
-        'ID',
-        'Component Name',
-        'Type',
-        'Category',
-        'Subcategory',
-        'Author',
-        'Version',
-        'Views',
-        'Downloads',
-        'Reuses',
-        'Date Added',
-        'Keywords'
-    ])
-
-    for comp in Component.objects.select_related('category', 'subcategory').all():
-        writer.writerow([
-            comp.id,
-            comp.name,
-            comp.get_component_type_display(),
-            comp.category.name if comp.category else '',
-            comp.subcategory.name if comp.subcategory else '',
-            comp.author,
-            comp.version,
-            comp.view_count,
-            comp.download_count,
-            comp.reuse_count,
-            comp.created_at.strftime('%Y-%m-%d'),
-            comp.keywords
-        ])
-
-    return response
 
 
 # ==============================================================================

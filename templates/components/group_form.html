@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} — Software Component Catalog{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ title }}</h1>
+    <p class="page-subtitle">Organize components by defining top-level categories or subgroups.</p>
+  </div>
+  <div>
+    <a href="{% url 'component_list' %}" class="btn btn-secondary">&larr; Back to Catalog</a>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 24px; align-items: start;">
+  <!-- Form Card -->
+  <div class="card" style="margin-bottom: 0;">
+    <form method="post">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="message message-error" style="margin-bottom: 16px;">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <!-- Group Name -->
+      <div class="form-group">
+        <label class="form-label" for="{{ form.name.id_for_label }}">Group / Category Name *</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+          <span class="form-help" style="color: var(--accent-danger);">{{ form.name.errors.0 }}</span>
+        {% else %}
+          <span class="form-help">Enter a recognizable name (e.g. "Cloud & DevOps", "Authentication", "UI Elements").</span>
+        {% endif %}
+      </div>
+
+      <!-- Parent Group -->
+      <div class="form-group">
+        <label class="form-label" for="{{ form.parent.id_for_label }}">Parent Group (Optional)</label>
+        {{ form.parent }}
+        {% if form.parent.errors %}
+          <span class="form-help" style="color: var(--accent-danger);">{{ form.parent.errors.0 }}</span>
+        {% else %}
+          <span class="form-help">Select a parent group to create a subcategory, or leave as None to create a root group.</span>
+        {% endif %}
+      </div>
+
+      <!-- Component Type -->
+      <div class="form-group">
+        <label class="form-label" for="{{ form.component_type.id_for_label }}">Target Component Classification *</label>
+        {{ form.component_type }}
+        {% if form.component_type.errors %}
+          <span class="form-help" style="color: var(--accent-danger);">{{ form.component_type.errors.0 }}</span>
+        {% else %}
+          <span class="form-help">Specify whether this group is for Code, Design artifacts, or All component types.</span>
+        {% endif %}
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+        {{ form.description }}
+        {% if form.description.errors %}
+          <span class="form-help" style="color: var(--accent-danger);">{{ form.description.errors.0 }}</span>
+        {% else %}
+          <span class="form-help">Briefly summarize the purpose or scope of components categorized here.</span>
+        {% endif %}
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+        <button type="submit" class="btn btn-primary">+ Create Group</button>
+        <a href="{% url 'component_list' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Sidebar: Existing Groups Hierarchy -->
+  <div class="card" style="margin-bottom: 0;">
+    <h3 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text-main);">
+      Existing Groups
+    </h3>
+    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+      Current category hierarchy in the component repository:
+    </p>
+
+    {% if existing_groups %}
+      <div style="display: flex; flex-direction: column; gap: 12px; max-height: 480px; overflow-y: auto;">
+        {% for cat in existing_groups %}
+          <div style="border-left: 3px solid var(--primary-color); padding-left: 10px;">
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">
+              {{ cat.name }}
+              <span class="badge" style="font-size: 10px; padding: 1px 5px; margin-left: 4px;">{{ cat.get_component_type_display }}</span>
+            </div>
+            {% if cat.subcategories.all %}
+              <ul style="list-style: none; margin-top: 4px; padding-left: 8px; font-size: 13px; color: var(--text-muted);">
+                {% for sub in cat.subcategories.all %}
+                  <li style="padding: 2px 0;">
+                    &bull; {{ sub.name }}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="font-size: 13px; color: var(--text-muted); font-style: italic;">
+        No groups defined yet. Create your first group!
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

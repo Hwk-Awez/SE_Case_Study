@@ -4,7 +4,10 @@ from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from django.contrib.auth.models import User
-from components.models import Category, Component, ReuseRecord, SearchQuery, ComponentUsage
+from components.models import (
+    Category, Component, ReuseRecord, SearchQuery, ComponentUsage,
+    ComponentKeyword, ComponentWord
+)
 
 
 class Command(BaseCommand):
@@ -562,6 +565,129 @@ def merge(left, right):
   </ul>
 </nav>
 '''
+            },
+            {
+                'name': 'Rate Limiting Middleware',
+                'description': 'Token-bucket sliding-window rate limiting middleware for web applications. Tracks client IP requests with customizable burst allowances, cooling periods, and HTTP 429 Too Many Requests response headers.',
+                'component_type': 'CODE',
+                'category': backend,
+                'subcategory': auth_cat,
+                'keywords': 'rate limit, throttle, security, middleware, api, token bucket',
+                'author': 'Alex Rivera (Backend Team)',
+                'version': '1.1.0',
+                'view_count': 38,
+                'download_count': 19,
+                'reuse_count': 7,
+                'filename': 'rate_limiter.py',
+                'file_content': '''"""
+Rate Limiting Middleware
+Sliding-window token bucket implementation.
+"""
+import time
+from collections import defaultdict
+
+class RateLimiter:
+    def __init__(self, max_requests: int = 60, window_seconds: int = 60):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.requests = defaultdict(list)
+
+    def is_allowed(self, client_id: str) -> bool:
+        now = time.time()
+        timestamps = [t for t in self.requests[client_id] if now - t < self.window_seconds]
+        self.requests[client_id] = timestamps
+        if len(timestamps) < self.max_requests:
+            self.requests[client_id].append(now)
+            return True
+        return False
+'''
+            },
+            {
+                'name': 'MongoDB Connection Adapter',
+                'description': 'Thread-safe PyMongo client wrapper providing structured connection lifecycle management, database health heartbeat checks, collection caching, and automatic TLS configuration.',
+                'component_type': 'CODE',
+                'category': backend,
+                'subcategory': mongo_cat,
+                'keywords': 'mongodb, nosql, database, pymongo, adapter, client, collection',
+                'author': 'David Kumar (Database Admin)',
+                'version': '1.0.3',
+                'view_count': 29,
+                'download_count': 14,
+                'reuse_count': 5,
+                'filename': 'mongo_adapter.py',
+                'file_content': '''"""
+MongoDB Connection Adapter
+Helper for MongoClient connection reuse and ping verification.
+"""
+class MongoAdapter:
+    def __init__(self, uri="mongodb://localhost:27017/", db_name="app_catalog"):
+        self.uri = uri
+        self.db_name = db_name
+        self._client = None
+
+    def get_db(self):
+        if not self._client:
+            from pymongo import MongoClient
+            self._client = MongoClient(self.uri, serverSelectionTimeoutMS=5000)
+        return self._client[self.db_name]
+'''
+            },
+            {
+                'name': 'Microservices Event-Driven Architecture Blueprint',
+                'description': 'Enterprise architecture specification defining asynchronous event streaming across decoupled service domains. Covers message schemas, Kafka broker topology, idempotency guarantees, and dead-letter queue exception recovery.',
+                'component_type': 'DESIGN',
+                'category': design,
+                'subcategory': arch_cat,
+                'keywords': 'microservices, architecture, kafka, event driven, cqrs, pubsub, blueprint',
+                'author': 'Elena Rostova (Systems Architect)',
+                'version': '2.0.0',
+                'view_count': 54,
+                'download_count': 28,
+                'reuse_count': 12,
+                'filename': 'event_driven_architecture.txt',
+                'file_content': '''============================================================
+EVENT-DRIVEN MICROSERVICES ARCHITECTURE BLUEPRINT
+============================================================
+1. Domain Events:
+   - OrderCreated, PaymentProcessed, InventoryReserved, ShipmentDispatched.
+2. Messaging Backbone:
+   - Apache Kafka multi-broker cluster with partition key hashing.
+3. Reliability & Delivery:
+   - Outbox Pattern with at-least-once delivery semantics.
+   - Consumer idempotent deduplication table on message ID.
+4. Error Handling:
+   - Exponential backoff retry topics (retry-1, retry-2).
+   - Poison message redirection to Dead Letter Queue (DLQ).
+============================================================
+'''
+            },
+            {
+                'name': 'Breadcrumbs & Pagination UI Component',
+                'description': 'Accessible vanilla HTML/CSS component providing dynamic breadcrumb hierarchy pathing and pagination controls with ARIA states and keyboard navigation support.',
+                'component_type': 'CODE',
+                'category': frontend,
+                'subcategory': ui_cat,
+                'keywords': 'ui, breadcrumb, pagination, navigation, html, css, accessibility',
+                'author': 'Sarah Chen (UI/UX Lab)',
+                'version': '1.0.1',
+                'view_count': 33,
+                'download_count': 17,
+                'reuse_count': 6,
+                'filename': 'breadcrumbs_pagination.html',
+                'file_content': '''<!-- Breadcrumbs & Pagination UI Component -->
+<nav aria-label="Breadcrumb" class="breadcrumbs">
+  <ol>
+    <li><a href="/">Home</a></li>
+    <li><a href="/catalog/">Catalog</a></li>
+    <li aria-current="page">Components</li>
+  </ol>
+</nav>
+<div class="pagination" role="navigation" aria-label="Pagination">
+  <button class="page-prev" aria-label="Previous page">&larr; Prev</button>
+  <span class="page-current">Page 1 of 5</span>
+  <button class="page-next" aria-label="Next page">Next &rarr;</button>
+</div>
+'''
             }
         ]
 
@@ -576,6 +702,19 @@ def merge(left, right):
             )
             if created or not component.file:
                 component.file.save(filename, ContentFile(file_content.encode('utf-8')), save=True)
+
+            # Populate ComponentKeyword and ComponentWord with bulk_create
+            if created:
+                kw_objs = [ComponentKeyword(component=component, keyword=kw) for kw in component.get_keywords_list()]
+                ComponentKeyword.objects.bulk_create(kw_objs, ignore_conflicts=True)
+
+                try:
+                    from components.services.search import tokenize
+                    full_text = f"{component.name} {component.description} {component.keywords} {component.author}"
+                    word_objs = [ComponentWord(component=component, word=w) for w in set(tokenize(full_text))]
+                    ComponentWord.objects.bulk_create(word_objs, ignore_conflicts=True)
+                except Exception:
+                    pass
 
         self.stdout.write("Components seeded.")
 

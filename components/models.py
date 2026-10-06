@@ -142,6 +142,21 @@ class ComponentKeyword(models.Model):
         return f"{self.component.name} - {self.keyword}"
 
 
+# Token model for lightweight search
+class ComponentWord(models.Model):
+    """Stores lower‑case token words extracted from a Component.
+    Used by the simplified token‑based search service.
+    """
+    component = models.ForeignKey(Component, on_delete=models.CASCADE, related_name='words')
+    word = models.CharField(max_length=60, db_index=True)
+
+    class Meta:
+        unique_together = ('component', 'word')
+        indexes = [models.Index(fields=['word'])]
+
+    def __str__(self):
+        return f"{self.component.name} → {self.word}"
+
 class ReuseRecord(models.Model):
     """
     Detailed audit log of whenever a developer marks a component as reused.
@@ -207,3 +222,16 @@ class SearchQuery(models.Model):
 
     def __str__(self):
         return f"'{self.query_text}' ({self.results_count} results) [{self.search_mode}]"
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=Component)
+def auto_index_component(sender, instance, **kwargs):
+    try:
+        from components.services.search import index_component_tokens
+        index_component_tokens(instance)
+    except Exception:
+        pass
+

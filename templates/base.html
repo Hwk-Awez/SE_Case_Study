@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Component Catalog{% endblock %} — Internal Software Repository</title>
+  <title>{% block title %}Component Catalog{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
@@ -22,12 +22,9 @@
             <li><a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a></li>
             <li><a href="{% url 'component_list' %}" class="{% if request.resolver_match.url_name == 'component_list' %}active{% endif %}">Components</a></li>
             <li><a href="{% url 'component_create' %}" class="{% if request.resolver_match.url_name == 'component_create' %}active{% endif %}">Add Component</a></li>
-            <li><a href="{% url 'browse' %}" class="{% if request.resolver_match.url_name == 'browse' %}active{% endif %}">Browse</a></li>
-            <li><a href="{% url 'analytics' %}" class="{% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">Analytics</a></li>
-            <li><a href="{% url 'reports' %}" class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}">Reports</a></li>
+            <li><a href="{% url 'group_create' %}" class="{% if request.resolver_match.url_name == 'group_create' %}active{% endif %}">Add Group</a></li>
           </ul>
         </nav>
-
         <div class="auth-nav">
           <span class="auth-user">{{ user.username }}</span>
           <span style="color: var(--border-dark);">|</span>
@@ -35,7 +32,7 @@
         </div>
       {% else %}
         <div class="auth-nav">
-          <span class="badge badge-neutral">Developer Portal &bull; Authentication Required</span>
+          <a href="{% url 'login' %}">Login</a>
         </div>
       {% endif %}
     </div>
@@ -46,32 +43,17 @@
     {% if messages %}
       <div class="messages-container">
         {% for message in messages %}
-          <div class="message message-{{ message.tags }}">
-            {{ message }}
-          </div>
+          <div class="message message-{{ message.tags }}">{{ message }}</div>
         {% endfor %}
       </div>
     {% endif %}
-
-    {% block content %}
-    {% endblock %}
+    {% block content %}{% endblock %}
   </main>
 
   <!-- Footer -->
   <footer class="site-footer">
     <div class="footer-container">
-      <div>
-        <strong>Software Component Cataloguing System</strong> — Centralized Repository for Software Reuse
-      </div>
-      <div>
-        <span>Software Engineering Case Study</span>
-        <span style="margin: 0 6px;">&bull;</span>
-        {% if semantic_search_enabled %}
-          <span style="color: var(--accent-success); font-weight: 500;">Semantic Vector Engine: Active</span>
-        {% else %}
-          <span style="color: var(--text-muted);">Search Engine: Keyword &amp; Concept Expansion</span>
-        {% endif %}
-      </div>
+      <div><strong>Software Component Cataloguing System</strong> — Centralized Repository for Software Reuse</div>
     </div>
   </footer>
 

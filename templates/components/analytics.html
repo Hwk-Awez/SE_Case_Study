@@ -76,35 +76,6 @@
       </table>
     </div>
 
-    <!-- Most Downloaded -->
-    <div class="card" style="margin-bottom: 0; padding: 14px;">
-      <h3 style="font-size: 14px; font-weight: 600; color: var(--primary-color); margin-bottom: 10px;">
-        &#8681; Most Downloaded Components
-      </h3>
-      <table class="data-table" style="font-size: 13px;">
-        <thead>
-          <tr>
-            <th>Component</th>
-            <th style="text-align: right;">Downloads</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for comp in most_downloaded %}
-            <tr>
-              <td>
-                <a href="{% url 'component_detail' comp.pk %}">{{ comp.name }}</a>
-              </td>
-              <td style="text-align: right; font-weight: 600;">
-                {{ comp.download_count }}
-              </td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="2" style="color: var(--text-muted);">No records</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
     <!-- Most Viewed -->
     <div class="card" style="margin-bottom: 0; padding: 14px;">
       <h3 style="font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 10px;">

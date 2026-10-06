@@ -115,17 +115,6 @@ class ComponentCatalogTests(TestCase):
         self.assertEqual(self.comp1.view_count, initial_views + 1)
         self.assertTrue(ComponentUsage.objects.filter(component=self.comp1, action_type='VIEW').exists())
 
-    def test_download_increments_download_count(self):
-        """Downloading component file increments download_count."""
-        self.client.force_login(self.user)
-        initial_downloads = self.comp1.download_count
-        response = self.client.get(reverse('component_download', args=[self.comp1.pk]))
-        self.assertEqual(response.status_code, 200)
-
-        self.comp1.refresh_from_db()
-        self.assertEqual(self.comp1.download_count, initial_downloads + 1)
-        self.assertTrue(ComponentUsage.objects.filter(component=self.comp1, action_type='DOWNLOAD').exists())
-
     def test_mark_as_reused_action(self):
         """Mark as reused increases reuse_count and creates ReuseRecord."""
         self.client.force_login(self.user)
@@ -202,15 +191,9 @@ class ComponentCatalogTests(TestCase):
         self.assertContains(response, "quantum blockchain")
         self.assertGreaterEqual(response.context['zero_result_count'], 1)
 
-    def test_reports_and_csv_export(self):
-        """Reports view displays summary and CSV export responds with CSV header."""
+    def test_reports_view(self):
+        """Reports view displays summary metrics."""
         self.client.force_login(self.user)
         response = self.client.get(reverse('reports'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "SOFTWARE COMPONENT REPOSITORY AUDIT REPORT")
-
-        csv_response = self.client.get(reverse('export_report_csv'))
-        self.assertEqual(csv_response.status_code, 200)
-        self.assertEqual(csv_response['Content-Type'], 'text/csv')
-        self.assertIn('Component Name', csv_response.content.decode('utf-8'))
-        self.assertIn('JWT Authentication Module', csv_response.content.decode('utf-8'))

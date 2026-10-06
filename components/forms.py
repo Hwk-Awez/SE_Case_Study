@@ -18,7 +18,6 @@ class ComponentForm(forms.ModelForm):
             'keywords',
             'author',
             'version',
-            'file',
         ]
         widgets = {
             'name': forms.TextInput(attrs={
@@ -45,7 +44,6 @@ class ComponentForm(forms.ModelForm):
                 'class': 'form-input',
                 'placeholder': '1.0.0'
             }),
-            'file': forms.FileInput(attrs={'class': 'form-input'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -60,10 +58,37 @@ class ComponentForm(forms.ModelForm):
         self.fields['subcategory'].required = False
 
 
+class GroupForm(forms.ModelForm):
+    """
+    Form for creating a Category (Group or Subgroup).
+    Supports top-level groups or subcategories under an existing parent.
+    """
+    class Meta:
+        model = Category
+        fields = ['name', 'parent', 'component_type', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'e.g. Authentication, Cloud Infrastructure, UI Components'
+            }),
+            'parent': forms.Select(attrs={'class': 'form-select'}),
+            'component_type': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'rows': 3,
+                'placeholder': 'Brief description of what components belong in this group...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['parent'].queryset = Category.objects.filter(parent__isnull=True)
+        self.fields['parent'].empty_label = "-- None (Create as Top-Level Group) --"
+        self.fields['parent'].required = False
+
+
 class ReuseRecordForm(forms.ModelForm):
-    """
-    Form for recording an instance of component reuse.
-    """
+    """Form for recording an instance of component reuse."""
     class Meta:
         model = ReuseRecord
         fields = ['reused_by', 'project_name', 'action', 'notes']

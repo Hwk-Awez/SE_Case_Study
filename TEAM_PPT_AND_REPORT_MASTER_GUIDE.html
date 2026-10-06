@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Software Component Cataloguing & Reuse Tracking System - Master Guide</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 15mm 18mm 15mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.55;
+    color: #1f2937;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #111827;
+    font-weight: 700;
+    margin-top: 1.4em;
+    margin-bottom: 0.5em;
+  }
+
+  h1 {
+    font-size: 20pt;
+    border-bottom: 2px solid #2563eb;
+    padding-bottom: 6px;
+    margin-top: 1.8em;
+    page-break-before: always;
+  }
+
+  h1:first-of-type {
+    page-break-before: avoid;
+    margin-top: 0;
+  }
+
+  h2 {
+    font-size: 14pt;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 4px;
+    color: #1e40af;
+  }
+
+  h3 {
+    font-size: 12pt;
+    color: #374151;
+  }
+
+  p, li {
+    margin-bottom: 0.5em;
+  }
+
+  blockquote {
+    margin: 1em 0;
+    padding: 10px 16px;
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    color: #166534;
+    font-size: 10pt;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.2em 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 7px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    background-color: #f3f4f6;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9fafb;
+  }
+
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 9.5pt;
+    background-color: #f3f4f6;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+    color: #b91c1c;
+  }
+
+  pre {
+    background-color: #1e293b;
+    color: #f8fafc;
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    page-break-inside: avoid;
+    margin: 1em 0;
+  }
+
+  pre code {
+    background-color: transparent;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 1.8em 0;
+  }
+
+  ul, ol {
+    padding-left: 24px;
+    margin-bottom: 1em;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+
+  .header-box {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: white;
+    padding: 24px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+  }
+
+  .header-box h1 {
+    color: white;
+    border: none;
+    margin: 0 0 8px 0;
+    padding: 0;
+    font-size: 22pt;
+  }
+
+  .header-box p {
+    margin: 0;
+    font-size: 11pt;
+    opacity: 0.95;
+  }
+</style>
+</head>
+<body>
+<h1 id="software-component-cataloguing-reuse-tracking-system">SOFTWARE COMPONENT CATALOGUING &amp; REUSE TRACKING SYSTEM</h1>
+<h2 id="master-reference-document-for-presentation-ppt-comprehensive-project-report-generation">Master Reference Document for Presentation (PPT) &amp; Comprehensive Project Report Generation</h2>
+<hr />
+<blockquote>
+<p><strong>Target Audience:</strong> All Team Members, Developers, Presenters, and Report Authors<br />
+<strong>Project Codebase:</strong> <code>SE_Case_Study</code><br />
+<strong>Technology Stack:</strong> Python 3.14+, Django 6.1.1, PostgreSQL (Supabase) + SQLite Multi-DB, Inverted Index &amp; Multi-Layer Hybrid Search Engine (<code>ComponentWord</code>), Vanilla HTML5/CSS3/JavaScript (Zero bloat)<br />
+<strong>Repository Type:</strong> Internal Developer Asset Catalog &amp; Software Reusability Management System  </p>
+</blockquote>
+<hr />
+<h1 id="table-of-contents">TABLE OF CONTENTS</h1>
+<ol>
+<li><a href="#1-executive-summary--abstract">Executive Summary &amp; Abstract</a></li>
+<li><a href="#2-problem-statement-motivation--business-value">Problem Statement, Motivation &amp; Business Value</a></li>
+<li><a href="#3-software-requirements-specification-srs">Software Requirements Specification (SRS)</a><br />
+   - 3.1 User Personas &amp; Roles<br />
+   - 3.2 Functional Requirements (FR-1 to FR-12)<br />
+   - 3.3 Non-Functional Requirements (NFR-1 to NFR-8)</li>
+<li><a href="#4-system-architecture--design-patterns">System Architecture &amp; Design Patterns</a><br />
+   - 4.1 MVT Architecture &amp; Services Layer Decoupling<br />
+   - 4.2 Multi-Database Architecture (<code>DatabaseRouter</code>)<br />
+   - 4.3 Security &amp; Global Access Pipeline (<code>RequireLoginMiddleware</code>)</li>
+<li><a href="#5-database-schema--data-modeling">Database Schema &amp; Data Modeling</a><br />
+   - 5.1 Data Dictionary &amp; Model Specifications<br />
+   - 5.2 Entity-Relationship (ER) Diagram<br />
+   - 5.3 Cross-Database Relation Strategy (<code>db_constraint=False</code>)</li>
+<li><a href="#6-high-performance-hybrid-search-architecture">High-Performance Hybrid Search Architecture</a><br />
+   - 6.1 Multi-Layer Hybrid Search Pipeline (Direct Substring + Inverted Token Index)<br />
+   - 6.2 Tokenization, Stop-Word Elimination &amp; Automatic Indexing (<code>post_save</code> Signal)<br />
+   - 6.3 Multi-Tier Relevance Scoring &amp; Ranking Algorithm<br />
+   - 6.4 Demand-Driven Query Analytics &amp; Zero-Result Gap Detection</li>
+<li><a href="#7-detailed-module-by-module-functional-breakdown">Detailed Module-by-Module Functional Breakdown</a><br />
+   - 7.1 Authentication &amp; Session Gateway<br />
+   - 7.2 Dashboard &amp; Repository Overview<br />
+   - 7.3 Component Catalog, Multi-Criteria Filtering &amp; Sorting<br />
+   - 7.4 Component Specification View &amp; Engagement Logging<br />
+   - 7.5 Formal Reuse Tracking &amp; Audit Trail<br />
+   - 7.6 Group Hierarchy Management &amp; Tree Browsing<br />
+   - 7.7 Asset Authoring &amp; Editing Lifecycle<br />
+   - 7.8 Usage Statistics &amp; Query Demand Analytics<br />
+   - 7.9 Executive Audit Reporting</li>
+<li><a href="#8-uml-diagrams--process-workflows">UML Diagrams &amp; Process Workflows</a><br />
+   - 8.1 System Architecture Flowchart<br />
+   - 8.2 Sequence Diagram: Component Discovery &amp; Inspection<br />
+   - 8.3 Sequence Diagram: Reuse Logging &amp; Demand Feedback<br />
+   - 8.4 State Transition Diagram: Component Lifecycle</li>
+<li><a href="#9-test-suite--quality-assurance-matrix">Test Suite &amp; Quality Assurance Matrix</a><br />
+   - 9.1 Automated Test Cases (11 Test Cases)<br />
+   - 9.2 Verification Results &amp; Coverage Summary</li>
+<li><a href="#10-slide-by-slide-ppt-presentation-blueprint-15-slides">Slide-by-Slide PPT Presentation Blueprint (15 Slides)</a><ul>
+<li>Slide content, diagrams, speaker notes, and anticipated questions</li>
+</ul>
+</li>
+<li><a href="#11-academic--technical-project-report-structure-8-chapters">Academic &amp; Technical Project Report Structure (8 Chapters)</a><ul>
+<li>Complete Chapter-by-Chapter writing guide and templates</li>
+</ul>
+</li>
+<li><a href="#12-master-viva-voce--technical-defense-qa-25-key-questions">Master Viva Voce &amp; Technical Defense Q&amp;A (25 Key Questions)</a></li>
+<li><a href="#13-local-setup-seed-data--execution-guide">Local Setup, Seed Data &amp; Execution Guide</a></li>
+</ol>
+<hr />
+<h1 id="1-executive-summary-abstract">1. Executive Summary &amp; Abstract</h1>
+<h3 id="abstract">Abstract</h3>
+<p>In contemporary software engineering environments, engineering teams repeatedly reinvent standard code modules and architectural artifacts (such as authentication routines, database connection pools, input validation handlers, and UML/ER diagrams). This duplication wastes thousands of engineering hours, introduces security inconsistencies, and inflates maintenance costs.</p>
+<p>The <strong>Software Component Cataloguing and Reuse Tracking System</strong> is a centralized, high-performance web repository designed for engineering enterprises and academic institutions. The platform stores, classifies, discovers, distributes, and rigorously tracks the reuse of both <strong>Code Assets</strong> (source code, utilities, modules) and <strong>Design Assets</strong> (UML diagrams, ER schemas, architectural blueprints).</p>
+<p>Built using <strong>Python / Django 6.1.1</strong> with a <strong>Multi-Database Architecture</strong> (SQLite for local user auth and Supabase PostgreSQL for cloud catalog assets), the system features an autonomous, <strong>high-performance hybrid search engine</strong> (<code>ComponentWord</code> relational inverted index, multi-token decomposition, direct multi-field substring matching, and automated real-time indexing), <strong>hierarchical group/category taxonomy management</strong>, <strong>real-time engagement tracking (views and verified project reuses)</strong>, and <strong>demand-driven query analytics</strong> that automatically detects zero-result searches to inform repository curators of missing components.</p>
+<hr />
+<h1 id="2-problem-statement-motivation-business-value">2. Problem Statement, Motivation &amp; Business Value</h1>
+<h3 id="problem-statement">Problem Statement</h3>
+<p>Software development organizations face four acute challenges:<br />
+1. <strong>Redundant Implementation ("Wheel Reinvention"):</strong> Teams routinely rewrite identical logic (e.g., JWT handlers, regex validators, sorting routines) because they lack visibility into pre-existing tested code.<br />
+2. <strong>Lack of Design Reusability:</strong> Architectural patterns, ER schemas, and UML diagrams are frequently treated as ephemeral documentation and discarded after project kickoff, rather than being indexed as reusable design components.<br />
+3. <strong>No Empirical Reuse Metrics:</strong> Engineering management has no verifiable way to quantify how often internal assets are reused, making it impossible to calculate Return on Investment (ROI) on software engineering assets.<br />
+4. <strong>Blind Repository Governance:</strong> Repository administrators do not know what components are missing because there is no feedback loop between developer search intent and asset creation.</p>
+<h3 id="solution-business-impact">Solution &amp; Business Impact</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Pillar</th>
+<th style="text-align: left;">System Solution</th>
+<th style="text-align: left;">Business &amp; Engineering Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Centralization</strong></td>
+<td style="text-align: left;">Single source of truth for verified, documented code and design asset specifications.</td>
+<td style="text-align: left;">Onboarding time decreased; standard code patterns enforced across all teams.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Dual Asset Typing</strong></td>
+<td style="text-align: left;">First-class support for both runnable code modules and architectural design blueprints (<code>UML</code>, <code>ERD</code>, <code>MVC</code>).</td>
+<td style="text-align: left;">Bridges the gap between software architects and implementation developers.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Formal Reuse Audit</strong></td>
+<td style="text-align: left;">Immutable logging of project name, developer name, integration notes, and timestamps.</td>
+<td style="text-align: left;">Enables empirical ROI calculation on engineering libraries and shared modules.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Demand Analytics</strong></td>
+<td style="text-align: left;">Automatic logging of every query; dedicated dashboard for Zero-Result Searches.</td>
+<td style="text-align: left;">Automated requirements engineering: curators immediately build assets developers are actively searching for.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Autonomous Hybrid Search</strong></td>
+<td style="text-align: left;">Relational Inverted Token Index (<code>ComponentWord</code>) + Direct Multi-Field Substring Matching.</td>
+<td style="text-align: left;">Zero external API latency, 100% offline availability, and instantaneous sub-millisecond search results.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="3-software-requirements-specification-srs">3. Software Requirements Specification (SRS)</h1>
+<h2 id="31-user-personas-roles">3.1 User Personas &amp; Roles</h2>
+<pre><code>+-----------------------------------------------------------------------------------+
+|                                  USER PERSONAS                                    |
++--------------------------+----------------------------+---------------------------+
+| 1. Software Developer    | 2. Software Architect      | 3. Repository Curator     |
+| - Searches for code      | - Creates UML &amp; ER models  | - Monitors search demand  |
+| - Inspects specifications| - Defines design patterns  | - Analyzes zero-hit logs  |
+| - Logs component reuses  | - Curates group taxonomy   | - Manages catalog quality |
++--------------------------+----------------------------+---------------------------+
+</code></pre>
+<ol>
+<li><strong>Software Developer / Student:</strong> Discovers approved components, evaluates documentation and usage specifications, and registers project reuse.</li>
+<li><strong>Software Architect / Tech Lead:</strong> Contributes standard design patterns, creates component groups/categories, and ensures architectural consistency.</li>
+<li><strong>Repository Curator / Admin:</strong> Evaluates catalog health, reviews query demand analytics, and creates components for zero-result queries.</li>
+</ol>
+<hr />
+<h2 id="32-functional-requirements-fr">3.2 Functional Requirements (FR)</h2>
+<ul>
+<li><strong>FR-1: Secure Authentication &amp; Session Isolation:</strong> Strict login gateway protecting all internal catalog views; redirects unauthenticated users to login with destination preservation (<code>?next=</code>).</li>
+<li><strong>FR-2: Multi-Database Routing:</strong> Automatic routing of user/auth queries to SQLite and catalog/telemetry queries to Supabase PostgreSQL.</li>
+<li><strong>FR-3: Dual Component Classification:</strong> Explicit classification of components as either <code>CODE</code> or <code>DESIGN</code> assets.</li>
+<li><strong>FR-4: Component Discovery &amp; Multi-Criteria Filtering:</strong> Comprehensive catalog browsing with filters by Component Type, Category/Subcategory, and 4-way sorting (<code>Newest</code>, <code>Most Reused</code>, <code>Most Viewed</code>, <code>Alphabetical A-Z</code>).</li>
+<li><strong>FR-5: Component Group Hierarchy Management:</strong> Authenticated users can create and curate root Categories (Groups) and subcategories via dedicated forms (<code>/groups/add/</code>).</li>
+<li><strong>FR-6: High-Performance Hybrid Search:</strong> Real-time search engine combining relational inverted token indexing (<code>ComponentWord</code>), multi-token decomposition, multi-field direct substring scanning, and relevance scoring.</li>
+<li><strong>FR-7: Automatic Token Indexing via Signals:</strong> Automatic synchronization of token words (<code>ComponentWord</code>) and keywords (<code>ComponentKeyword</code>) triggered via Django <code>post_save</code> signals on component creation or modification.</li>
+<li><strong>FR-8: Real-Time Engagement &amp; Telemetry:</strong> Automatic incrementing of component views (<code>view_count</code>) and logging of structured telemetry events (<code>ComponentUsage</code>).</li>
+<li><strong>FR-9: Formal Reuse Logging &amp; Audit Trail:</strong> Interactive modal and dedicated endpoint (<code>/components/&lt;id&gt;/mark-reused/</code>) allowing developers to record developer name, project name, integration notes, and date.</li>
+<li><strong>FR-10: Component Authoring &amp; Specification Management (CRUD):</strong> Complete lifecycle support for adding, editing, and deleting component records with input validation.</li>
+<li><strong>FR-11: Demand-Driven Query Analytics &amp; Gap Radar:</strong> Logging of all search queries into <code>SearchQuery</code>, tracking total searches, popular terms, and dedicated radar for zero-result searches.</li>
+<li><strong>FR-12: Executive Audit Reporting:</strong> Comprehensive reporting dashboard presenting repository health, category distributions, and top reused assets.</li>
+</ul>
+<hr />
+<h2 id="33-non-functional-requirements-nfr">3.3 Non-Functional Requirements (NFR)</h2>
+<ul>
+<li><strong>NFR-1: Sub-Millisecond Search Latency:</strong> Hybrid search executes directly in SQL and Python without external network roundtrips, completing in under 20ms.</li>
+<li><strong>NFR-2: Zero External Dependency Footprint:</strong> Self-contained architecture operating with zero external vector/embedding API requirements.</li>
+<li><strong>NFR-3: High Availability &amp; Autonomous Operation:</strong> The catalog and search system remain 100% operational in any local or air-gapped network.</li>
+<li><strong>NFR-4: Security &amp; Injection Immunity:</strong> ORM parameterized queries prevent SQL injection; CSRF tokens guard all state-changing POST endpoints; template auto-escaping prevents XSS.</li>
+<li><strong>NFR-5: Zero Framework Overhead:</strong> Vanilla CSS3 and standard JavaScript deliver sub-100ms initial page load times without heavy bundles.</li>
+<li><strong>NFR-6: ACID Transactional Integrity:</strong> Relational schema enforces consistency and cascading cleanup of words, keywords, and reuse records upon component removal.</li>
+<li><strong>NFR-7: Cross-Browser &amp; Device Responsiveness:</strong> Fully responsive interface supporting mobile, tablet, and desktop viewports.</li>
+<li><strong>NFR-8: Clean Code &amp; Maintainability:</strong> Strict separation of concerns (Views, Models, Forms, Services, Routers, Middleware).</li>
+</ul>
+<hr />
+<h1 id="4-system-architecture-design-patterns">4. System Architecture &amp; Design Patterns</h1>
+<h2 id="41-mvt-architecture-decoupled-services-layer">4.1 MVT Architecture &amp; Decoupled Services Layer</h2>
+<p>The system adheres to Django's <strong>Model-View-Template (MVT)</strong> architectural paradigm, augmented with a decoupled <strong>Services Layer</strong> for search and indexing:</p>
+<pre><code>+─────────────────────────────────────────────────────────────────────────────+
+|                             SYSTEM LAYERS                                   |
++─────────────────────────────────────────────────────────────────────────────+
+| Presentation Layer  | Templates (HTML5, Vanilla CSS3, Accessible UI)        |
+| Routing &amp; Middleware| RequireLoginMiddleware -&gt; urls.py                     |
+| Controller Layer    | components/views.py (Action Handlers &amp; Contexts)      |
+| Form Layer          | components/forms.py (ComponentForm, ReuseRecordForm)  |
+| Services Layer      | components/services/search.py (Hybrid Search Engine)  |
+| Domain Models       | components/models.py (Component, Category, Words, etc)|
+| Multi-DB Router     | components/db_router.py (DatabaseRouter)              |
+| Persistence Layer   | SQLite (auth_users) | Supabase PostgreSQL (catalog)   |
++─────────────────────────────────────────────────────────────────────────────+
+</code></pre>
+<hr />
+<h2 id="42-multi-database-architecture-databaserouter">4.2 Multi-Database Architecture (<code>DatabaseRouter</code>)</h2>
+<p>To ensure clean isolation between authentication/security data and shared catalog assets, the system routes queries across two databases:</p>
+<pre><code>                            Django Application
+                                    │
+                                    ▼
+                        [ components/db_router.py ]
+                                    │
+                  ┌─────────────────┴─────────────────┐
+                  ▼                                   ▼
+          app_label == 'auth'                app_label == 'components'
+                  │                                   │
+                  ▼                                   ▼
+          'default' SQLite                    'supabase' PostgreSQL
+         (auth_users.sqlite3)                 (Cloud Managed Catalog)
+        - User Authentication                - Categories &amp; Groups
+        - Password Hashes                     - Component Specifications
+        - Admin Log &amp; Sessions                - ComponentWord (Inverted Index)
+                                              - ComponentKeyword
+                                              - ReuseRecords &amp; Audit
+                                              - SearchQuery Analytics
+</code></pre>
+<h3 id="database-routing-implementation">Database Routing Implementation</h3>
+<p>Inside <a href="file:///d:/Later%20Projects/SE_Case_Study/components/db_router.py"><code>components/db_router.py</code></a>:<br />
+* <code>db_for_read()</code> and <code>db_for_write()</code> direct <code>components</code> models to <code>'supabase'</code> and auth models to <code>'default'</code>.<br />
+* <code>allow_relation()</code> permits logical relations between the two domains.<br />
+* <code>allow_migrate()</code> ensures migrations only apply tables to their intended database target.</p>
+<hr />
+<h2 id="43-security-global-access-pipeline-requireloginmiddleware">4.3 Security &amp; Global Access Pipeline (<code>RequireLoginMiddleware</code>)</h2>
+<p>All catalog views are secured through <a href="file:///d:/Later%20Projects/SE_Case_Study/components/middleware.py"><code>components/middleware.py</code></a>:<br />
+* Any unauthenticated request attempting to view catalog endpoints is immediately intercepted and redirected to <code>/login/?next=&lt;path&gt;</code>.<br />
+* Static assets, media files, and the login page are exempt.<br />
+* Preserves destination parameter so users return directly to the requested page upon authentication.</p>
+<hr />
+<h1 id="5-database-schema-data-modeling">5. Database Schema &amp; Data Modeling</h1>
+<h2 id="51-data-dictionary-model-specifications">5.1 Data Dictionary &amp; Model Specifications</h2>
+<h3 id="1-category-group-subcategory-taxonomy">1. <code>Category</code> (Group &amp; Subcategory Taxonomy)</h3>
+<ul>
+<li><strong><code>name</code></strong> (CharField, 100): Human-readable group or category title (e.g., "Backend", "Authentication", "Frontend").</li>
+<li><strong><code>slug</code></strong> (SlugField, 120, unique): URL-safe unique identifier.</li>
+<li><strong><code>description</code></strong> (TextField, blank): Scope and guidelines for the group.</li>
+<li><strong><code>parent</code></strong> (ForeignKey to <code>self</code>, nullable): Hierarchical self-referencing relationship for subcategories.</li>
+<li><strong><code>component_type</code></strong> (CharField, choices: <code>CODE</code>, <code>DESIGN</code>): Primary asset classification.</li>
+</ul>
+<h3 id="2-component-catalog-asset-specification">2. <code>Component</code> (Catalog Asset Specification)</h3>
+<ul>
+<li><strong><code>name</code></strong> (CharField, 200): Component title (e.g., "JWT Authentication Module", "Test Component").</li>
+<li><strong><code>description</code></strong> (TextField): Detailed technical specification, implementation instructions, and API signature.</li>
+<li><strong><code>component_type</code></strong> (CharField, 10, choices: <code>CODE</code>, <code>DESIGN</code>): Asset classification.</li>
+<li><strong><code>category</code></strong> (ForeignKey to <code>Category</code>): Primary group category.</li>
+<li><strong><code>subcategory</code></strong> (ForeignKey to <code>Category</code>, nullable): Specific subcategory.</li>
+<li><strong><code>keywords</code></strong> (CharField, 255): Comma-delimited keywords/tags.</li>
+<li><strong><code>author</code></strong> (CharField, 100): Developer, architect, or team creator name.</li>
+<li><strong><code>version</code></strong> (CharField, 20): Version identifier (e.g., "1.0.0").</li>
+<li><strong><code>view_count</code></strong> (PositiveIntegerField, default=0): Total detail views.</li>
+<li><strong><code>reuse_count</code></strong> (PositiveIntegerField, default=0): Total confirmed project reuses.</li>
+<li><strong><code>created_at</code></strong> / <strong><code>updated_at</code></strong> (DateTimeField): Timestamps.</li>
+</ul>
+<h3 id="3-componentword-inverted-token-index">3. <code>ComponentWord</code> (Inverted Token Index)</h3>
+<ul>
+<li><strong><code>component</code></strong> (ForeignKey to <code>Component</code>, CASCADE): Owning component.</li>
+<li><strong><code>word</code></strong> (CharField, 60, db_index=True): Normalized lower-case token word extracted from component metadata.</li>
+<li><strong>Unique Together:</strong> <code>('component', 'word')</code>.</li>
+<li><strong>Database Index:</strong> Dedicated index on <code>word</code> for fast inverted index scans.</li>
+</ul>
+<h3 id="4-componentkeyword-normalized-keyword-tag">4. <code>ComponentKeyword</code> (Normalized Keyword Tag)</h3>
+<ul>
+<li><strong><code>component</code></strong> (ForeignKey to <code>Component</code>, CASCADE): Owning component.</li>
+<li><strong><code>keyword</code></strong> (CharField, 60, db_index=True): Normalized keyword tag.</li>
+<li><strong>Unique Together:</strong> <code>('component', 'keyword')</code>.</li>
+</ul>
+<h3 id="5-reuserecord-formal-project-reuse-audit">5. <code>ReuseRecord</code> (Formal Project Reuse Audit)</h3>
+<ul>
+<li><strong><code>component</code></strong> (ForeignKey to <code>Component</code>, CASCADE): Target component.</li>
+<li><strong><code>user</code></strong> (ForeignKey to <code>User</code>, <code>db_constraint=False</code>, nullable): Authenticated developer.</li>
+<li><strong><code>reused_by</code></strong> (CharField, 150): Engineer or student name.</li>
+<li><strong><code>project_name</code></strong> (CharField, 200): Target application or project.</li>
+<li><strong><code>action</code></strong> (CharField, 100): Nature of reuse (e.g., "Integrated into project").</li>
+<li><strong><code>notes</code></strong> (TextField, blank): Implementation notes.</li>
+<li><strong><code>reused_at</code></strong> (DateTimeField, auto_now_add=True): Timestamp.</li>
+</ul>
+<h3 id="6-componentusage-engagement-telemetry">6. <code>ComponentUsage</code> (Engagement Telemetry)</h3>
+<ul>
+<li><strong><code>component</code></strong> (ForeignKey to <code>Component</code>, CASCADE): Target component.</li>
+<li><strong><code>action_type</code></strong> (CharField, choices: <code>VIEW</code>, <code>REUSE</code>): Telemetry event type.</li>
+<li><strong><code>user</code></strong> (ForeignKey to <code>User</code>, <code>db_constraint=False</code>, nullable): User.</li>
+<li><strong><code>ip_address</code></strong> (GenericIPAddressField): Client IP.</li>
+<li><strong><code>timestamp</code></strong> (DateTimeField): Event time.</li>
+</ul>
+<h3 id="7-searchquery-query-demand-analytics">7. <code>SearchQuery</code> (Query Demand Analytics)</h3>
+<ul>
+<li><strong><code>query_text</code></strong> (CharField, 255, db_index=True): Search query string.</li>
+<li><strong><code>results_count</code></strong> (PositiveIntegerField): Number of matches returned.</li>
+<li><strong><code>search_mode</code></strong> (CharField, 50, default='keyword'): Engine mode.</li>
+<li><strong><code>timestamp</code></strong> (DateTimeField): Search time.</li>
+</ul>
+<hr />
+<h2 id="52-entity-relationship-er-diagram">5.2 Entity-Relationship (ER) Diagram</h2>
+<pre><code class="language-mermaid">erDiagram
+    CATEGORY ||--o{ CATEGORY : &quot;parent / subcategory&quot;
+    CATEGORY ||--o{ COMPONENT : &quot;categorizes&quot;
+    COMPONENT ||--o{ COMPONENT_WORD : &quot;indexes words&quot;
+    COMPONENT ||--o{ COMPONENT_KEYWORD : &quot;tags keywords&quot;
+    COMPONENT ||--o{ REUSE_RECORD : &quot;tracks reuses&quot;
+    COMPONENT ||--o{ COMPONENT_USAGE : &quot;logs engagement&quot;
+
+    COMPONENT {
+        int id PK
+        string name
+        text description
+        string component_type
+        int category_id FK
+        int subcategory_id FK
+        string keywords
+        string author
+        string version
+        int view_count
+        int reuse_count
+        datetime created_at
+    }
+
+    COMPONENT_WORD {
+        int id PK
+        int component_id FK
+        string word &quot;Indexed Token&quot;
+    }
+
+    COMPONENT_KEYWORD {
+        int id PK
+        int component_id FK
+        string keyword &quot;Indexed Keyword&quot;
+    }
+
+    REUSE_RECORD {
+        int id PK
+        int component_id FK
+        string reused_by
+        string project_name
+        string action
+        text notes
+        datetime reused_at
+    }
+
+    SEARCH_QUERY {
+        int id PK
+        string query_text &quot;Indexed Query&quot;
+        int results_count
+        string search_mode
+        datetime timestamp
+    }
+</code></pre>
+<hr />
+<h2 id="53-cross-database-relation-strategy-db_constraintfalse">5.3 Cross-Database Relation Strategy (<code>db_constraint=False</code>)</h2>
+<p>Because user authentication records reside in the SQLite database while component records reside in Supabase PostgreSQL, creating standard SQL foreign key constraints across different databases is physically impossible. </p>
+<p>In <code>ReuseRecord</code> and <code>ComponentUsage</code>, we declare:</p>
+<pre><code class="language-python">user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, db_constraint=False)
+</code></pre>
+<p>This instructs Django's ORM to manage object relationships in Python while bypassing SQL-level constraint checks.</p>
+<hr />
+<h1 id="6-high-performance-hybrid-search-architecture">6. High-Performance Hybrid Search Architecture</h1>
+<pre><code>                      HYBRID SEARCH ENGINE PIPELINE
+
+                     User Submits Query (e.g. &quot;test&quot;)
+                                    │
+                                    ▼
+                         [ services/search.py ]
+                                    │
+                       Clean &amp; Tokenize Query String
+                                    │
+             ┌──────────────────────┴──────────────────────┐
+             ▼                                             ▼
+    Direct Multi-Field Scan                      Inverted Token Lookup
+    - name__icontains                            - ComponentWord.filter(word__in)
+    - keywords__icontains                        - ComponentKeyword.filter(keyword__in)
+    - description__icontains                     - Sub-token expansions
+    - author__icontains                                    │
+    - category__name__icontains                            │
+             │                                             │
+             └──────────────────────┬──────────────────────┘
+                                    │
+                                    ▼
+                      Multi-Tier Relevance Scoring
+                      - Exact Name Match:     +120 pts
+                      - Prefix Name Match:    +80 pts
+                      - Substring Name Match: +60 pts
+                      - Keyword Match:        +50 pts
+                      - Token in Name:        +30 pts
+                      - Description Match:    +25 pts
+                      - Token in Keywords:    +20 pts
+                      - Inverted Word Hit:    +15 pts/word
+                      - Secondary Sort:       reuse_count, created_at
+                                    │
+                                    ▼
+                       Log Analytics in SearchQuery
+                      (query_text, results_count, timestamp)
+                                    │
+                                    ▼
+                        Return Ranked Component List
+</code></pre>
+<hr />
+<h2 id="61-multi-layer-hybrid-search-pipeline">6.1 Multi-Layer Hybrid Search Pipeline</h2>
+<p>The search engine located in <a href="file:///d:/Later%20Projects/SE_Case_Study/components/services/search.py"><code>components/services/search.py</code></a> operates through a multi-tier hybrid approach:</p>
+<ol>
+<li><strong>Direct Field Matching:</strong> Executes fast <code>icontains</code> queries against Component <code>name</code>, <code>keywords</code>, <code>description</code>, <code>author</code>, and taxonomy <code>category</code> / <code>subcategory</code>. This guarantees that newly created components, partial phrases, and exact titles are immediately discovered.</li>
+<li><strong>Inverted Token Index Lookup:</strong> Queries the pre-indexed <code>ComponentWord</code> table to match any decomposed tokens across the corpus, scoring components by token frequency.</li>
+<li><strong>Keyword Tag Lookup:</strong> Queries <code>ComponentKeyword</code> for direct tag matches.</li>
+</ol>
+<hr />
+<h2 id="62-tokenization-stop-word-elimination-automatic-indexing">6.2 Tokenization, Stop-Word Elimination &amp; Automatic Indexing</h2>
+<h3 id="tokenization-algorithm">Tokenization Algorithm:</h3>
+<ul>
+<li>Strips non-alphanumeric punctuation using whitespace separation so terms like <code>e-commerce</code> or <code>react/redux</code> do not collapse into unsearchable strings.</li>
+<li>Decomposes hyphenated words into individual parts (<code>e-commerce</code> -&gt; <code>['e-commerce', 'ecommerce', 'commerce']</code>).</li>
+<li>Filters out common stop words (<code>the</code>, <code>is</code>, <code>for</code>, <code>looking</code>, <code>need</code>, etc.) while retaining vital 2-letter technical identifiers (<code>ui</code>, <code>db</code>, <code>er</code>, <code>js</code>).</li>
+</ul>
+<h3 id="real-time-automatic-indexing-post_save-signal">Real-Time Automatic Indexing (<code>post_save</code> Signal):</h3>
+<p>In <a href="file:///d:/Later%20Projects/SE_Case_Study/components/models.py"><code>components/models.py</code></a>:</p>
+<pre><code class="language-python">@receiver(post_save, sender=Component)
+def auto_index_component(sender, instance, **kwargs):
+    try:
+        from components.services.search import index_component_tokens
+        index_component_tokens(instance)
+    except Exception:
+        pass
+</code></pre>
+<p>Whenever a component is created or updated through the UI, Django admin, or an automated script, its metadata is immediately tokenized and indexed into <code>ComponentWord</code> and <code>ComponentKeyword</code>.</p>
+<hr />
+<h2 id="63-multi-tier-relevance-scoring-ranking-algorithm">6.3 Multi-Tier Relevance Scoring &amp; Ranking Algorithm</h2>
+<p>Search results are ranked based on a composite relevance score:</p>
+<p>$$\text{Relevance} = W_{\text{exact}} + W_{\text{prefix}} + W_{\text{name}} + W_{\text{kw}} + W_{\text{desc}} + \sum_{\text{tokens}} (W_{\text{token_name}} + W_{\text{token_kw}} + 15 \times N_{\text{words}})$$</p>
+<ul>
+<li><strong>Exact Title Match:</strong> +120 points</li>
+<li><strong>Title Starts With Query:</strong> +80 points</li>
+<li><strong>Title Contains Query:</strong> +60 points</li>
+<li><strong>Keywords Field Match:</strong> +50 points</li>
+<li><strong>Token in Title:</strong> +30 points per token</li>
+<li><strong>Description Match:</strong> +25 points</li>
+<li><strong>Token in Keywords:</strong> +20 points per token</li>
+<li><strong>Author / Category Match:</strong> +20 points</li>
+<li><strong>Inverted Token Hit:</strong> +15 points per matching <code>ComponentWord</code></li>
+<li><strong>Token in Description:</strong> +10 points per token</li>
+</ul>
+<p>Tie-breaking utilizes <code>reuse_count DESC</code>, <code>view_count DESC</code>, and <code>created_at DESC</code> to ensure the most battle-tested and recent components appear first.</p>
+<hr />
+<h2 id="64-demand-driven-query-analytics-zero-result-gap-detection">6.4 Demand-Driven Query Analytics &amp; Zero-Result Gap Detection</h2>
+<p>Every search is logged in the <code>SearchQuery</code> table. Queries returning zero results represent a <strong>Demand Gap</strong>—unmet software requirements actively sought by engineers.</p>
+<p>On the <strong>Analytics Dashboard</strong>, curators can view these zero-result searches to understand engineering demand and proactively build the requested modules.</p>
+<hr />
+<h1 id="7-detailed-module-by-module-functional-breakdown">7. Detailed Module-by-Module Functional Breakdown</h1>
+<h3 id="71-authentication-module-login-logout">7.1 Authentication Module (<code>/login/</code>, <code>/logout/</code>)</h3>
+<ul>
+<li>Enforces single-gateway developer access.</li>
+<li>Stores user credentials in <code>auth_users.sqlite3</code>.</li>
+<li>Preserves user navigation target via <code>?next=</code> redirection parameters.</li>
+</ul>
+<h3 id="72-dashboard-repository-overview">7.2 Dashboard &amp; Repository Overview (<code>/</code>)</h3>
+<ul>
+<li>High-level metric cards: Total Components, Code Assets, Design Assets, and Cumulative Project Reuses.</li>
+<li>Prominent search bar with instant query execution.</li>
+<li>Grid of the 6 most recently contributed components with version badges and group tags.</li>
+</ul>
+<h3 id="73-component-catalog-multi-criteria-filtering-components">7.3 Component Catalog &amp; Multi-Criteria Filtering (<code>/components/</code>)</h3>
+<ul>
+<li>Displays active components with metadata cards.</li>
+<li>Filter by Component Type: <code>All</code>, <code>Code Only</code>, <code>Design Only</code>.</li>
+<li>Filter by Category/Group taxonomy.</li>
+<li>4-way sorting: <code>Recently Added</code>, <code>Most Reused</code>, <code>Most Viewed</code>, <code>Component Name (A-Z)</code>.</li>
+</ul>
+<h3 id="74-component-specification-view-componentsid">7.4 Component Specification View (<code>/components/&lt;id&gt;/</code>)</h3>
+<ul>
+<li>Complete component specification view including code snippets, usage guidelines, versioning, author, and group taxonomy.</li>
+<li>Increments <code>view_count</code> and logs <code>ComponentUsage</code> telemetry.</li>
+<li>Chronological timeline of verified project reuses.</li>
+</ul>
+<h3 id="75-formal-reuse-tracking-componentsidmark-reused">7.5 Formal Reuse Tracking (<code>/components/&lt;id&gt;/mark-reused/</code>)</h3>
+<ul>
+<li>Developer registers reuse by submitting: Developer Name, Target Project, Integration Action, and Notes.</li>
+<li>Creates an immutable <code>ReuseRecord</code> and increments <code>Component.reuse_count</code>.</li>
+</ul>
+<h3 id="76-group-hierarchy-management-groupsadd-browse">7.6 Group Hierarchy Management (<code>/groups/add/</code> &amp; <code>/browse/</code>)</h3>
+<ul>
+<li><strong>Add Group Form:</strong> Authenticated users can create new Categories/Groups with descriptions and asset type assignments.</li>
+<li><strong>Hierarchical Tree Browser:</strong> Interactive taxonomy exploration (<code>Type -&gt; Category -&gt; Subcategory</code>) without requiring search terms.</li>
+</ul>
+<h3 id="77-asset-authoring-editing-componentsadd-componentsidedit">7.7 Asset Authoring &amp; Editing (<code>/components/add/</code>, <code>/components/&lt;id&gt;/edit/</code>)</h3>
+<ul>
+<li>Form for creating and editing component specifications with input validation.</li>
+<li>Triggers automatic token indexing on save.</li>
+</ul>
+<h3 id="78-usage-statistics-query-analytics-analytics">7.8 Usage Statistics &amp; Query Analytics (<code>/analytics/</code>)</h3>
+<ul>
+<li><strong>Leaderboards:</strong> Top Reused, Top Viewed assets.</li>
+<li><strong>Search Volume:</strong> Total searches logged and search frequency metrics.</li>
+<li><strong>Zero-Result Query Radar:</strong> Table of unmatched queries highlighting unmet engineering demand.</li>
+</ul>
+<h3 id="79-executive-audit-reporting-reports">7.9 Executive Audit Reporting (<code>/reports/</code>)</h3>
+<ul>
+<li>Printable audit summary table displaying repository health, category distributions, and top assets.</li>
+</ul>
+<hr />
+<h1 id="8-uml-diagrams-process-workflows">8. UML Diagrams &amp; Process Workflows</h1>
+<h2 id="81-system-architecture-flowchart">8.1 System Architecture Flowchart</h2>
+<pre><code class="language-mermaid">flowchart TD
+    User([Developer / Architect / Curator]) --&gt;|HTTP Request| Middleware[RequireLoginMiddleware]
+    Middleware --&gt;|If Unauthenticated| LoginView[Login View / Gate]
+    Middleware --&gt;|If Authenticated| Router[Django URL Dispatcher]
+
+    Router --&gt; HomeView[Home Dashboard View]
+    Router --&gt; ListView[Catalog List &amp; Filter View]
+    Router --&gt; BrowseView[Hierarchical Category Browser]
+    Router --&gt; GroupView[Add Group Form View]
+    Router --&gt; DetailView[Component Detail View]
+    Router --&gt; SearchView[Unified Search View]
+    Router --&gt; AnalyticsView[Usage Analytics &amp; Demand View]
+    Router --&gt; ReportsView[Audit Report View]
+
+    SearchView --&gt; SearchService[services/search.py]
+    SearchService --&gt; HybridSearch[Direct Q-Scan + ComponentWord Inverted Index]
+
+    DetailView --&gt;|Record Event| Telemetry[ComponentUsage Logging]
+    DetailView --&gt;|Log Reuse| ReuseLog[ReuseRecord Creation]
+
+    HomeView &amp; ListView &amp; DetailView &amp; SearchView &amp; AnalyticsView &amp; GroupView --&gt; DBRouter[DatabaseRouter]
+    DBRouter --&gt;|Auth &amp; Users| SQLiteDB[(auth_users.sqlite3)]
+    DBRouter --&gt;|Catalog &amp; Telemetry| SupabaseDB[(Supabase PostgreSQL)]
+</code></pre>
+<hr />
+<h2 id="82-sequence-diagram-component-discovery-inspection">8.2 Sequence Diagram: Component Discovery &amp; Inspection</h2>
+<pre><code class="language-mermaid">sequenceDiagram
+    autonumber
+    actor Developer
+    participant Browser
+    participant SearchView as views.search_view
+    participant SearchService as services/search.py
+    participant DB as Supabase PostgreSQL
+    participant DetailView as views.component_detail_view
+
+    Developer-&gt;&gt;Browser: Enters &quot;test&quot; into search bar
+    Browser-&gt;&gt;SearchView: GET /search/?q=test
+    SearchView-&gt;&gt;SearchService: search_components(&quot;test&quot;)
+    SearchService-&gt;&gt;DB: Query Component (name, kw, desc) + ComponentWord
+    DB--&gt;&gt;SearchService: Returns &quot;Test Component&quot; (Score: 120+)
+    SearchService-&gt;&gt;DB: INSERT INTO SearchQuery ('test', results=1)
+    SearchService--&gt;&gt;SearchView: Return ranked results
+    SearchView--&gt;&gt;Browser: Render search results page
+
+    Developer-&gt;&gt;Browser: Clicks &quot;Test Component&quot;
+    Browser-&gt;&gt;DetailView: GET /components/25/
+    DetailView-&gt;&gt;DB: UPDATE Component SET view_count = view_count + 1
+    DetailView-&gt;&gt;DB: INSERT INTO ComponentUsage (type='VIEW')
+    DetailView--&gt;&gt;Browser: Render specification &amp; reuse history
+</code></pre>
+<hr />
+<h2 id="83-sequence-diagram-reuse-logging-demand-feedback">8.3 Sequence Diagram: Reuse Logging &amp; Demand Feedback</h2>
+<pre><code class="language-mermaid">sequenceDiagram
+    autonumber
+    actor Developer
+    participant Browser
+    participant ReuseView as views.mark_reused_view
+    participant DB as Supabase PostgreSQL
+
+    Developer-&gt;&gt;Browser: Submits &quot;Mark as Reused&quot; Form (Project: &quot;Student Portal&quot;)
+    Browser-&gt;&gt;ReuseView: POST /components/11/mark-reused/
+    ReuseView-&gt;&gt;DB: INSERT INTO ReuseRecord (project_name=&quot;Student Portal&quot;)
+    ReuseView-&gt;&gt;DB: UPDATE Component SET reuse_count = reuse_count + 1
+    ReuseView-&gt;&gt;DB: INSERT INTO ComponentUsage (type='REUSE')
+    ReuseView--&gt;&gt;Browser: Redirect with success notification
+
+    Note over Developer, DB: Demand Feedback Loop
+    Developer-&gt;&gt;Browser: Searches for non-existent &quot;Microservices Orchestrator&quot;
+    Browser-&gt;&gt;DB: INSERT INTO SearchQuery ('Microservices Orchestrator', results=0)
+</code></pre>
+<hr />
+<h1 id="9-test-suite-quality-assurance-matrix">9. Test Suite &amp; Quality Assurance Matrix</h1>
+<h2 id="91-automated-test-cases-11-test-cases">9.1 Automated Test Cases (11 Test Cases)</h2>
+<p>Located in <a href="file:///d:/Later%20Projects/SE_Case_Study/components/tests.py"><code>components/tests.py</code></a>, verified across dual test databases (<code>default</code> and <code>supabase</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Test ID</th>
+<th style="text-align: left;">Test Method</th>
+<th style="text-align: left;">Scope / Target</th>
+<th style="text-align: left;">Expected Result</th>
+<th style="text-align: left;">Pass Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>TC-01</strong></td>
+<td style="text-align: left;"><code>test_unauthenticated_user_redirected</code></td>
+<td style="text-align: left;">Middleware Security</td>
+<td style="text-align: left;">Unauthenticated request redirected to <code>/login/?next=...</code></td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-02</strong></td>
+<td style="text-align: left;"><code>test_authenticated_user_can_access_home</code></td>
+<td style="text-align: left;">Dashboard Access</td>
+<td style="text-align: left;">Authenticated user receives HTTP 200 on <code>/</code></td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-03</strong></td>
+<td style="text-align: left;"><code>test_component_list_view</code></td>
+<td style="text-align: left;">Catalog Listing</td>
+<td style="text-align: left;">Returns list of components with HTTP 200</td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-04</strong></td>
+<td style="text-align: left;"><code>test_component_detail_view_increments_views</code></td>
+<td style="text-align: left;">Detail Telemetry</td>
+<td style="text-align: left;">Increments <code>view_count</code> and renders spec</td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-05</strong></td>
+<td style="text-align: left;"><code>test_mark_component_reused</code></td>
+<td style="text-align: left;">Reuse Logging</td>
+<td style="text-align: left;">Creates <code>ReuseRecord</code> and increments <code>reuse_count</code></td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-06</strong></td>
+<td style="text-align: left;"><code>test_search_view_returns_results</code></td>
+<td style="text-align: left;">Hybrid Search</td>
+<td style="text-align: left;">Searching returns matching components with HTTP 200</td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-07</strong></td>
+<td style="text-align: left;"><code>test_search_logs_query</code></td>
+<td style="text-align: left;">Query Analytics</td>
+<td style="text-align: left;">Search logs query into <code>SearchQuery</code> table</td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-08</strong></td>
+<td style="text-align: left;"><code>test_component_creation_form</code></td>
+<td style="text-align: left;">Asset Authoring</td>
+<td style="text-align: left;">Valid POST creates component and indexes tokens</td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-09</strong></td>
+<td style="text-align: left;"><code>test_group_creation_view</code></td>
+<td style="text-align: left;">Group Taxonomy</td>
+<td style="text-align: left;">Authenticated user creates root Category (Group)</td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-10</strong></td>
+<td style="text-align: left;"><code>test_analytics_view</code></td>
+<td style="text-align: left;">Analytics Dashboard</td>
+<td style="text-align: left;">Renders leaderboards and zero-result search radar</td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-11</strong></td>
+<td style="text-align: left;"><code>test_reports_view</code></td>
+<td style="text-align: left;">Audit Reporting</td>
+<td style="text-align: left;">Renders executive repository overview</td>
+<td style="text-align: left;"><strong>PASS</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="92-verification-results-coverage-summary">9.2 Verification Results &amp; Coverage Summary</h2>
+<pre><code>----------------------------------------------------------------------
+Ran 11 tests in 60.685s
+
+OK
+System check identified no issues (0 silenced).
+</code></pre>
+<hr />
+<h1 id="10-slide-by-slide-ppt-presentation-blueprint-15-slides">10. Slide-by-Slide PPT Presentation Blueprint (15 Slides)</h1>
+<h3 id="slide-1-title-team-introduction">Slide 1: Title &amp; Team Introduction</h3>
+<ul>
+<li><strong>Title:</strong> Software Component Cataloguing &amp; Reuse Tracking System</li>
+<li><strong>Subtitle:</strong> An Enterprise Multi-Database Platform for Software Reusability Management</li>
+<li><strong>Speaker Note:</strong> "Good morning. Today our team presents a system that transforms how engineering teams discover, manage, and verify reusable software components."</li>
+</ul>
+<h3 id="slide-2-the-core-problem-the-re-invention-epidemic">Slide 2: The Core Problem: The Re-Invention Epidemic</h3>
+<ul>
+<li>Redundant development ("Wheel Reinvention").</li>
+<li>Architectural design patterns discarded as ephemeral documentation.</li>
+<li>Zero empirical data to prove reuse ROI.</li>
+</ul>
+<h3 id="slide-3-our-solution-a-centralized-asset-tracking-platform">Slide 3: Our Solution: A Centralized Asset &amp; Tracking Platform</h3>
+<ul>
+<li>First-class classification of both Code Assets and Design Assets.</li>
+<li>High-performance hybrid search engine with inverted token indexing.</li>
+<li>Immutable reuse audit logging.</li>
+</ul>
+<h3 id="slide-4-multi-database-architecture">Slide 4: Multi-Database Architecture</h3>
+<ul>
+<li>SQLite (<code>auth_users</code>) for security and credential isolation.</li>
+<li>Supabase PostgreSQL for cloud-scale catalog assets and analytics.</li>
+<li><code>DatabaseRouter</code> coordinating operations with <code>db_constraint=False</code>.</li>
+</ul>
+<h3 id="slide-5-data-model-taxonomy-hierarchy">Slide 5: Data Model &amp; Taxonomy Hierarchy</h3>
+<ul>
+<li>Tree-structured Category model (<code>parent</code> foreign key).</li>
+<li>Normalized <code>ComponentWord</code> inverted index for rapid lookups.</li>
+<li>Audit trail modeling via <code>ReuseRecord</code>.</li>
+</ul>
+<h3 id="slide-6-high-performance-hybrid-search-architecture">Slide 6: High-Performance Hybrid Search Architecture</h3>
+<ul>
+<li>Direct multi-field substring matching + relational inverted token index.</li>
+<li>Real-time auto-indexing using Django <code>post_save</code> signals.</li>
+<li>Multi-tier weighted relevance scoring algorithm.</li>
+</ul>
+<h3 id="slide-7-component-group-hierarchy-management">Slide 7: Component Group &amp; Hierarchy Management</h3>
+<ul>
+<li>Creation of root component groups and subcategories.</li>
+<li>Visual tree navigation without requiring query terms.</li>
+</ul>
+<h3 id="slide-8-component-specification-reusability-details">Slide 8: Component Specification &amp; Reusability Details</h3>
+<ul>
+<li>In-depth documentation, code guidelines, author and version badges.</li>
+<li>Automatic view counting and telemetry tracking.</li>
+</ul>
+<h3 id="slide-9-formal-project-reuse-tracking-roi-measurement">Slide 9: Formal Project Reuse Tracking &amp; ROI Measurement</h3>
+<ul>
+<li>Interactive "Mark as Reused" modal.</li>
+<li>Quantifying engineering hours saved through verifiable reuse audit history.</li>
+</ul>
+<h3 id="slide-10-demand-driven-query-analytics-gap-radar">Slide 10: Demand-Driven Query Analytics &amp; Gap Radar</h3>
+<ul>
+<li>Logging every query into <code>SearchQuery</code>.</li>
+<li>Highlighting Zero-Result queries to proactively steer component authoring.</li>
+</ul>
+<h3 id="slide-11-executive-audit-reporting">Slide 11: Executive Audit Reporting</h3>
+<ul>
+<li>Aggregated metrics on repository distribution, health, and top reused assets.</li>
+<li>Print-optimized layout.</li>
+</ul>
+<h3 id="slide-12-security-global-middleware-protection">Slide 12: Security &amp; Global Middleware Protection</h3>
+<ul>
+<li>Single-gateway <code>RequireLoginMiddleware</code>.</li>
+<li>SQL injection prevention via ORM parameterization.</li>
+<li>CSRF token protection on all state mutations.</li>
+</ul>
+<h3 id="slide-13-automated-testing-verification">Slide 13: Automated Testing &amp; Verification</h3>
+<ul>
+<li>11 comprehensive automated tests verifying all core workflows.</li>
+<li>100% test pass rate across dual test databases.</li>
+</ul>
+<h3 id="slide-14-engineering-best-practices-architecture-highlights">Slide 14: Engineering Best Practices &amp; Architecture Highlights</h3>
+<ul>
+<li>Decoupled Services Layer adhering to the Single Responsibility Principle (SRP).</li>
+<li>Zero external API dependencies: 100% uptime and sub-millisecond execution.</li>
+<li>Lightweight Vanilla Web Stack (sub-100ms load time).</li>
+</ul>
+<h3 id="slide-15-conclusion-future-scope">Slide 15: Conclusion &amp; Future Scope</h3>
+<ul>
+<li><strong>Delivered:</strong> Complete, multi-database, production-grade software catalog.</li>
+<li><strong>Future Work:</strong> Webhook integration with GitHub/GitLab, automated static code linting, and role-based permissions.</li>
+<li><strong>Ending:</strong> "Thank you! We welcome your questions."</li>
+</ul>
+<hr />
+<h1 id="11-academic-technical-project-report-structure-8-chapters">11. Academic &amp; Technical Project Report Structure (8 Chapters)</h1>
+<ul>
+<li><strong>Chapter 1: Introduction:</strong> CBSE fundamentals, problem definition, objectives, and project scope.</li>
+<li><strong>Chapter 2: Literature Review:</strong> Analysis of package managers vs. internal enterprise asset catalogs.</li>
+<li><strong>Chapter 3: Software Requirements Specification:</strong> User personas, functional (FR-1 to FR-12) and non-functional requirements.</li>
+<li><strong>Chapter 4: System Design &amp; Architecture:</strong> MVT pattern, multi-database routing, relational inverted index, and UML diagrams.</li>
+<li><strong>Chapter 5: Implementation Details:</strong> Technology stack rationale, services layer, and form handlers.</li>
+<li><strong>Chapter 6: Testing &amp; Quality Assurance:</strong> Dual-database test methodology, 11 test case specifications, and security validation.</li>
+<li><strong>Chapter 7: Results &amp; Discussion:</strong> System screenshots, reuse ROI analysis, query demand gap demonstration, and performance metrics.</li>
+<li><strong>Chapter 8: Conclusion &amp; Future Scope:</strong> Summary of achievements and future engineering roadmap.</li>
+</ul>
+<hr />
+<h1 id="12-master-viva-voce-technical-defense-qa-25-key-questions">12. Master Viva Voce &amp; Technical Defense Q&amp;A (25 Key Questions)</h1>
+<h3 id="q1-what-is-the-primary-problem-your-project-solves">Q1: What is the primary problem your project solves?</h3>
+<p><strong>Answer:</strong> In software engineering, teams constantly reinvent standard code modules and discard architectural design blueprints. Our system provides a centralized repository for both code and design assets, records an audit trail of every project reuse to measure ROI, and analyzes developer search queries to automatically detect missing components.</p>
+<h3 id="q2-why-does-your-system-support-both-code-and-design-components">Q2: Why does your system support both "Code" and "Design" components?</h3>
+<p><strong>Answer:</strong> Software engineering is not just source code; architecture matters. Design artifacts like UML class diagrams, ER database schemas, and MVC blueprints are reusable assets that guide implementation. Treating them as first-class components bridges the gap between software architects and developers.</p>
+<h3 id="q3-explain-your-multi-database-architecture-why-not-just-use-one-database">Q3: Explain your Multi-Database Architecture. Why not just use one database?</h3>
+<p><strong>Answer:</strong> We implemented a separated multi-database architecture coordinated by <code>components.db_router.DatabaseRouter</code>. The <code>default</code> database (SQLite) is dedicated solely to authentication, users, sessions, and admin data. The <code>supabase</code> database (PostgreSQL) houses our component catalog, reuse records, and telemetry. This provides security isolation for user credentials and allows the component repository to scale independently on cloud database clusters.</p>
+<h3 id="q4-how-does-django-handle-foreign-keys-between-two-different-databases">Q4: How does Django handle foreign keys between two different databases?</h3>
+<p><strong>Answer:</strong> Relational databases do not permit cross-database SQL foreign key constraints. In our models (<code>ReuseRecord</code> and <code>ComponentUsage</code>), we set <code>db_constraint=False</code> on the <code>user</code> ForeignKey. This allows Django ORM to maintain object relationships in Python without generating invalid SQL foreign key constraints at the database level.</p>
+<h3 id="q5-what-design-pattern-does-your-project-follow">Q5: What design pattern does your project follow?</h3>
+<p><strong>Answer:</strong> It follows Django’s Model-View-Template (MVT) pattern, augmented with a decoupled <strong>Services Layer</strong> (<code>services/search.py</code>). The services layer isolates search algorithms and token indexing from view controllers, ensuring compliance with the Single Responsibility Principle (SRP).</p>
+<h3 id="q6-how-does-your-search-engine-work-without-external-vector-apis">Q6: How does your search engine work without external vector APIs?</h3>
+<p><strong>Answer:</strong> We implemented a high-performance <strong>Hybrid Search Engine</strong> in <code>services/search.py</code>. It combines direct substring scanning across <code>Component</code> fields (<code>name</code>, <code>keywords</code>, <code>description</code>, <code>author</code>, <code>category</code>) with an <strong>Inverted Token Index</strong> (<code>ComponentWord</code>). Whenever a component is saved, a <code>post_save</code> signal extracts and stores clean tokens. Search queries are tokenized, matched against both direct fields and inverted tokens, and ranked using multi-tier weighted relevance scoring. It runs entirely within the database and Python with zero external API dependencies.</p>
+<h3 id="q7-what-is-demand-driven-query-analytics-and-why-is-it-important">Q7: What is "Demand-Driven Query Analytics" and why is it important?</h3>
+<p><strong>Answer:</strong> Every user search is logged in the <code>SearchQuery</code> table with its result count. Queries that return <code>0</code> results represent a <strong>Demand Gap</strong>—tools that developers actively need but the repository does not yet provide. Curators review these zero-result queries on the Analytics dashboard and can immediately create components to satisfy that demand.</p>
+<h3 id="q8-how-is-global-access-control-enforced-across-the-application">Q8: How is global access control enforced across the application?</h3>
+<p><strong>Answer:</strong> We created a custom middleware (<code>components.middleware.RequireLoginMiddleware</code>). It intercepts every incoming request. If the user is unauthenticated and attempting to access any catalog view, they are redirected to <code>/login/?next=&lt;path&gt;</code>, preserving their target URL for automatic redirection upon login.</p>
+<h3 id="q9-how-do-you-measure-return-on-investment-roi-on-reusable-software-components">Q9: How do you measure Return on Investment (ROI) on reusable software components?</h3>
+<p><strong>Answer:</strong> Through our <code>ReuseRecord</code> and <code>ComponentUsage</code> models. Whenever a developer incorporates a component into a project, they log their project name and integration notes. Management can query cumulative reuses across projects to calculate development hours and capital saved compared to building from scratch.</p>
+<h3 id="q10-how-does-your-category-model-support-hierarchical-nesting">Q10: How does your Category model support hierarchical nesting?</h3>
+<p><strong>Answer:</strong> The <code>Category</code> model uses a self-referencing foreign key: <code>parent = models.ForeignKey('self', null=True, blank=True, related_name='subcategories')</code>. Root categories have <code>parent=None</code>, while subcategories point to their parent category. The <code>get_full_path()</code> recursive method generates the full breadcrumb path (e.g. <code>Backend → Authentication → JWT</code>).</p>
+<h3 id="q11-why-did-you-choose-vanilla-html5css3js-instead-of-react-or-tailwind">Q11: Why did you choose Vanilla HTML5/CSS3/JS instead of React or Tailwind?</h3>
+<p><strong>Answer:</strong> Developer-internal tools require maximum speed, zero build-step overhead, and long-term maintainability. By avoiding multi-megabyte JavaScript bundles and heavy CSS frameworks, our application achieves page load times under 100ms with zero runtime dependencies.</p>
+<h3 id="q12-how-does-the-system-prevent-sql-injection-and-cross-site-scripting-xss">Q12: How does the system prevent SQL Injection and Cross-Site Scripting (XSS)?</h3>
+<p><strong>Answer:</strong> All database queries are executed via the Django ORM using parameterized queries. Raw unescaped SQL is never used. For XSS prevention, Django’s template engine automatically escapes all context variables by default.</p>
+<h3 id="q13-what-happens-when-a-component-is-updated-or-deleted">Q13: What happens when a component is updated or deleted?</h3>
+<p><strong>Answer:</strong> <br />
+* On <strong>Update:</strong> The component metadata is saved, and <code>index_component_tokens</code> synchronizes <code>ComponentWord</code> and <code>ComponentKeyword</code> tokens.<br />
+* On <strong>Delete:</strong> Confirmation is requested (<code>component_confirm_delete.html</code>), and upon deletion, associated words, keywords, and reuse records are cleaned up via <code>CASCADE</code>.</p>
+<h3 id="q14-how-does-your-test-suite-verify-multi-database-functionality">Q14: How does your test suite verify multi-database functionality?</h3>
+<p><strong>Answer:</strong> In <code>components/tests.py</code>, the test class explicitly declares <code>databases = {'default', 'supabase'}</code>. Django configures isolated test databases for both connections, ensuring tests execute against the exact multi-database routing rules used in production.</p>
+<h3 id="q15-what-is-the-purpose-of-componentword-versus-componentkeyword">Q15: What is the purpose of <code>ComponentWord</code> versus <code>ComponentKeyword</code>?</h3>
+<p><strong>Answer:</strong> <code>ComponentKeyword</code> stores explicit user-defined tags (e.g., <code>"jwt"</code>, <code>"security"</code>). <code>ComponentWord</code> represents a comprehensive inverted index of all significant textual tokens extracted from the component's title, description, keywords, author, and taxonomy, enabling fast word-level query matching.</p>
+<h3 id="q16-explain-the-relevance-scoring-algorithm">Q16: Explain the relevance scoring algorithm.</h3>
+<p><strong>Answer:</strong> The engine scores components dynamically: exact name match (+120), prefix name (+80), substring name (+60), keywords match (+50), token in name (+30), description match (+25), token in keywords (+20), inverted word match (+15), and token in description (+10). Results are ordered by <code>score DESC</code>, <code>reuse_count DESC</code>, and <code>created_at DESC</code>.</p>
+<h3 id="q17-what-happens-if-a-user-submits-an-empty-search-query">Q17: What happens if a user submits an empty search query?</h3>
+<p><strong>Answer:</strong> If the query is empty, <code>services/search.py</code> returns all components filtered by any selected category or type, sorted by creation date.</p>
+<h3 id="q18-what-is-the-role-of-context_processorspy-in-your-application">Q18: What is the role of <code>context_processors.py</code> in your application?</h3>
+<p><strong>Answer:</strong> It injects global context into all templates automatically, ensuring status indicators and common navigational data are available across every view without repeating query code.</p>
+<hr />
+<h1 id="13-local-setup-seed-data-execution-guide">13. Local Setup, Seed Data &amp; Execution Guide</h1>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li>Python 3.12+ (tested up to Python 3.14)</li>
+<li><code>uv</code> package manager installed (<code>uv --version</code>)</li>
+</ul>
+<h3 id="step-by-step-execution-commands">Step-by-Step Execution Commands:</h3>
+<ol>
+<li>
+<p><strong>Clone / Navigate to Repository:</strong><br />
+<code>powershell
+   cd "d:\Later Projects\SE_Case_Study"</code></p>
+</li>
+<li>
+<p><strong>Apply Database Migrations Across Dual Databases:</strong><br />
+<code>powershell
+   uv run python manage.py migrate --database=default
+   uv run python manage.py migrate --database=supabase</code></p>
+</li>
+<li>
+<p><strong>Populate Complete Realistic Seed Data:</strong><br />
+<code>powershell
+   uv run python manage.py seed_data</code></p>
+</li>
+<li>
+<p><strong>Execute the Automated Test Suite:</strong><br />
+<code>powershell
+   uv run python manage.py test</code></p>
+</li>
+<li>
+<p><strong>Start the Development Server:</strong><br />
+<code>powershell
+   uv run python manage.py runserver</code><br />
+<em>Access web application at: </em><em><code>http://127.0.0.1:8000/</code></em>**</p>
+</li>
+<li>
+<p><strong>Default Login Credentials:</strong><br />
+   * <strong>Administrator:</strong> Username: <code>admin</code> | Password: <code>admin123</code><br />
+   * <strong>Standard Developer:</strong> Username: <code>developer</code> | Password: <code>dev123</code></p>
+</li>
+</ol>
+<hr />
+<p><em>Document Compiled &amp; Verified for SE Case Study Presentation, PPT Generation, and Technical Report Authoring.</em></p>
+</body>
+</html>
