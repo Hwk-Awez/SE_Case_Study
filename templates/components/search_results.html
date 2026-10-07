@@ -37,11 +37,7 @@
   <div class="search-meta-note">
     <span>
       <strong>Engine:</strong>
-      {% if search_mode == 'semantic' %}
-        <span class="badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">Pinecone Vector Similarity</span>
-      {% else %}
-        <span class="badge badge-neutral">Keyword &amp; Concept Expansion Fallback</span>
-      {% endif %}
+      <span class="badge badge-neutral">Hybrid Token &amp; Keyword Search</span>
       &bull; {{ search_note }}
     </span>
   </div>
